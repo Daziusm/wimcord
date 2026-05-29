@@ -77,13 +77,13 @@ pnpm run build
 pnpm run inject
 ```
 
-**Ship your own installer exe:**
+**Package for offline testing:**
 
 ```bash
-pnpm run wimcord:installer:exe
+pnpm run wimcord:installer:package
 ```
 
-Output: `release/installer/Wimcord-Installer-0.1.1.exe`
+Output: `release/wimcord-installer-<version>/` — run `Install Wimcord.bat` inside it.
 
 ---
 
