@@ -3,15 +3,22 @@
  * Runs install/repair/uninstall outside the Electron UI (avoids Discord file locks on Windows).
  */
 import { spawn } from "child_process";
-import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "fs";
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
 
-import { ensureWimcordRootEnv, getInstallerAppDir, getWimcordRoot } from "./paths.mjs";
+import {
+    ensureWimcordRootEnv,
+    getInstallerAppDir,
+    getInstallerPatchRequestPath,
+    getInstallerResultPath,
+    getInstallerSpawnCwd,
+    isPackagedInstaller,
+} from "./paths.mjs";
 
 const INSTALLER_DIR = getInstallerAppDir();
 const ROOT = ensureWimcordRootEnv();
-const PATCH_REQUEST = join(ROOT, "dist", "installer-patch-request.json");
-const RESULT_FILE = join(ROOT, "dist", "installer-result.json");
+const PATCH_REQUEST = getInstallerPatchRequestPath();
+const RESULT_FILE = getInstallerResultPath();
 const ENTRY = join(INSTALLER_DIR, "entry.mjs");
 
 function readPatchRequest() {
@@ -29,7 +36,6 @@ function readPatchRequest() {
 }
 
 function respawnGui() {
-    const electron = process.execPath;
     const env = { ...process.env };
     delete env.ELECTRON_RUN_AS_NODE;
     delete env.WIMCORD_PATCH_WORKER;
@@ -37,8 +43,11 @@ function respawnGui() {
     env.WIMCORD_INSTALLER_RESULT = "1";
     ensureWimcordRootEnv();
 
-    const child = spawn(electron, [ENTRY], {
-        cwd: ROOT,
+    // Packaged portable exe: relaunch with no args (entry.mjs path breaks portable startup).
+    const args = isPackagedInstaller() ? [] : [ENTRY];
+
+    const child = spawn(process.execPath, args, {
+        cwd: getInstallerSpawnCwd(),
         env,
         detached: true,
         stdio: "ignore",
@@ -53,8 +62,6 @@ export async function runPatchWorker() {
         console.error("[Wimcord] No patch request found.");
         return false;
     }
-
-    mkdirSync(join(ROOT, "dist"), { recursive: true });
 
     const { runInstallerCliAsync } = await import("./wimcordInstallerLib.mjs");
     const { killDiscordProcesses } = await import("./discordKill.mjs");

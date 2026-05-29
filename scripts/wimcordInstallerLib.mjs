@@ -23,9 +23,11 @@ function discordKillModule() {
     return join(LIB_DIR, "..", "installer", "discordKill.mjs");
 }
 
-const FILE_DIR = join(WIMCORD_ROOT, "dist", "Installer");
+const INSTALLER_STATE_DIR =
+    process.env.WIMCORD_INSTALLER_STATE_DIR ?? join(WIMCORD_ROOT, "dist", "installer-state");
+const FILE_DIR = join(INSTALLER_STATE_DIR, "Installer");
 const ETAG_FILE = join(FILE_DIR, "etag.txt");
-export const INSTALLER_LOG = join(WIMCORD_ROOT, "dist", "installer-last-run.log");
+export const INSTALLER_LOG = join(INSTALLER_STATE_DIR, "installer-last-run.log");
 
 const TIMEOUT_MS = {
     uninstall: 3 * 60 * 1000,

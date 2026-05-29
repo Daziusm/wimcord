@@ -4,19 +4,33 @@
  */
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import { spawn } from "child_process";
-import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from "fs";
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from "fs";
 import { join } from "path";
 
 import { findDiscordInstalls, parseDiscordInstall, discordProcessName } from "./discordDetect.mjs";
 import { killDiscordProcesses } from "./discordKill.mjs";
 import { findDiscordUpdateExe, resolvePnpmBinary } from "./utils.mjs";
-import { ensureWimcordRootEnv, getInstallerAppDir, getWimcordRoot, isPackagedInstaller } from "./paths.mjs";
+import {
+    ensureWimcordRootEnv,
+    getInstallerAppDir,
+    getInstallerPatchRequestPath,
+    getInstallerResultPath,
+    getInstallerSpawnCwd,
+    getWimcordRoot,
+    isPackagedInstaller,
+} from "./paths.mjs";
 import { ensureInstallerBinary, runInstallerCliAsync } from "./wimcordInstallerLib.mjs";
 
 const __dirname = getInstallerAppDir();
 const ROOT = ensureWimcordRootEnv();
-const PATCH_REQUEST = join(ROOT, "dist", "installer-patch-request.json");
+const PATCH_REQUEST = getInstallerPatchRequestPath();
+const RESULT_FILE = getInstallerResultPath();
 const ENTRY = join(__dirname, "entry.mjs");
+
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+    app.quit();
+}
 
 let mainWindow = null;
 let logWindow = null;
@@ -131,7 +145,6 @@ async function runInstallerAction(action, options = {}) {
         (isPackagedInstaller() || process.env.WIMCORD_INSTALLER_LAUNCHER === "1");
 
     if (useHandoff) {
-        mkdirSync(join(ROOT, "dist"), { recursive: true });
         writeFileSync(
             PATCH_REQUEST,
             JSON.stringify({
@@ -154,7 +167,7 @@ async function runInstallerAction(action, options = {}) {
             };
             ensureWimcordRootEnv();
             spawn(process.execPath, [ENTRY], {
-                cwd: ROOT,
+                cwd: getInstallerSpawnCwd(),
                 env,
                 detached: true,
                 stdio: "inherit",
@@ -257,6 +270,14 @@ function createWindow() {
     });
 }
 
+if (gotSingleInstanceLock) {
+app.on("second-instance", () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        if (mainWindow.isMinimized()) mainWindow.restore();
+        mainWindow.focus();
+    }
+});
+
 app.whenReady().then(async () => {
     ensureInstallerBinary(msg => sendProgress({ status: msg })).catch(() => {});
 
@@ -296,8 +317,6 @@ app.whenReady().then(async () => {
     });
 
     ipcMain.handle("wimcord-installer-restart-discord", (_, options) => restartDiscord(options));
-
-    const RESULT_FILE = join(ROOT, "dist", "installer-result.json");
 
     ipcMain.handle("wimcord-installer-read-result", () => {
         if (!existsSync(RESULT_FILE)) return null;
@@ -344,3 +363,4 @@ app.whenReady().then(async () => {
 app.on("window-all-closed", () => {
     if (process.platform !== "darwin") app.quit();
 });
+}
