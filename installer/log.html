@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wimcord — Logs</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #09090b;
+      color: #a1a1aa;
+      font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+      font-size: 11px;
+      line-height: 1.45;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 36px;
+      padding: 0 12px;
+      border-bottom: 1px solid #27272a;
+      background: #18181b;
+      color: #fafafa;
+      font-family: system-ui, sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    button {
+      background: #27272a;
+      border: 1px solid #3f3f46;
+      color: #e4e4e7;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 11px;
+    }
+    button:hover { background: #3f3f46; }
+    #log {
+      margin: 0;
+      padding: 12px;
+      height: calc(100vh - 36px);
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <span>Installer output</span>
+    <button type="button" id="clear">Clear</button>
+  </header>
+  <pre id="log"></pre>
+  <script src="log-renderer.js"></script>
+</body>
+</html>

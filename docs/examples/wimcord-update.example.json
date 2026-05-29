@@ -1,0 +1,7 @@
+{
+  "version": "0.1.1",
+  "publishedAt": "2026-05-28",
+  "notes": "Bug fixes and stability improvements for older Discord clients.",
+  "installerUrl": "https://github.com/YOUR_USER/wimcord/releases/latest",
+  "downloadUrl": ""
+}

@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "badges": [
+    {
+      "id": "user",
+      "description": "Wimcord User",
+      "iconSrc": "https://cdn.discordapp.com/emojis/1238120638020063377.png",
+      "userIds": []
+    }
+  ]
+}

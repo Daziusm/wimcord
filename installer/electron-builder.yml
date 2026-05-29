@@ -1,0 +1,37 @@
+appId: com.wimcord.installer
+productName: Wimcord Installer
+copyright: Copyright © 2026 Wimcord contributors
+
+directories:
+  output: ../release/installer
+  buildResources: build
+
+files:
+  - entry.mjs
+  - main.mjs
+  - patch-worker.mjs
+  - paths.mjs
+  - discordDetect.mjs
+  - discordKill.mjs
+  - utils.mjs
+  - wimcordInstallerLib.mjs
+  - preload.cjs
+  - log-preload.cjs
+  - log.html
+  - log-renderer.js
+  - ui/dist/**
+  - package.json
+
+extraResources:
+  - from: ../dist
+    to: wimcord/dist
+    filter:
+      - "**/*"
+
+win:
+  target:
+    - portable
+  artifactName: Wimcord-Installer-${version}.exe
+
+portable:
+  artifactName: Wimcord-Installer-${version}.exe

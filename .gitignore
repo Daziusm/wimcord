@@ -1,0 +1,45 @@
+# Dependencies & build
+node_modules/
+dist/
+browser/
+
+# Logs & OS
+*.log
+.DS_Store
+
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+**/*.env
+!**/*.env.example
+# Server deploy (private — not part of the public mod repo)
+deploy/
+
+# Local / scratch
+.tmp-nightcord/
+.agents/
+skills-lock.json
+
+# Editor & assistant config (not part of the mod)
+.gemini/
+.github/
+.vscode/
+
+# Local settings (user-specific)
+settings/*
+!settings/.gitkeep
+
+# User plugins may contain private code
+src/userplugins/*
+!src/userplugins/.gitkeep
+
+# Installer packager deps
+installer/node_modules/
+
+# Release artifacts
+release/
+
+# Generated for installer exe packaging
+# Build copy of installer lib (generated before pack)
+installer/wimcordInstallerLib.mjs
