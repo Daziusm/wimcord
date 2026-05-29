@@ -14,7 +14,7 @@ const commands = {
     build: ["pnpm", "run", "build"],
     dev: ["pnpm", "run", "dev"],
     inject: ["pnpm", "run", "inject"],
-    "installer-gui": ["node", "scripts/wimcord-installer-gui.mjs"],
+    "installer-gui": ["node", "scripts/wimcord-installer.mjs"],
     clean: null,
 };
 

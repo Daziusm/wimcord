@@ -34,12 +34,9 @@ settings/*
 src/userplugins/*
 !src/userplugins/.gitkeep
 
-# Installer packager deps
-installer/node_modules/
-
 # Release artifacts
 release/
 
-# Generated for installer exe packaging
-# Build copy of installer lib (generated before pack)
-installer/wimcordInstallerLib.mjs
+# Installer upstream cache
+.cache/
+dist/Installer/.vencord-upstream.exe

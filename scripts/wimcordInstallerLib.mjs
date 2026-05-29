@@ -17,10 +17,7 @@ export const WIMCORD_ROOT =
     process.env.WIMCORD_ROOT ??
     join(LIB_DIR, "..");
 function discordKillModule() {
-    if (existsSync(join(LIB_DIR, "discordKill.mjs"))) {
-        return join(LIB_DIR, "discordKill.mjs");
-    }
-    return join(LIB_DIR, "..", "installer", "discordKill.mjs");
+    return join(LIB_DIR, "installer-lib", "discordKill.mjs");
 }
 
 const INSTALLER_STATE_DIR =

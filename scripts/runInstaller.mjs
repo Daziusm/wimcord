@@ -33,7 +33,7 @@ try {
     if (action) {
         console.log(`[Wimcord] ${action} (using Vencord Installer CLI from ${WIMCORD_ROOT})`);
         if (process.platform === "win32" && ["install", "repair", "uninstall"].includes(action)) {
-            const { killDiscordProcesses } = await import("../installer/discordKill.mjs");
+            const { killDiscordProcesses } = await import("./installer-lib/discordKill.mjs");
             const target = targetFromPassthrough(passthrough);
             console.log("[Wimcord] Closing Discord if running…");
             const { ok } = await killDiscordProcesses(target, chunk => process.stdout.write(chunk));

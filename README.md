@@ -12,9 +12,7 @@ Wimcord is a desktop client mod with a focused first-party layer on top of the f
 
 ## Install (Windows)
 
-Uses **[Vencord’s official installer](https://github.com/Vencord/Installer)** (`VencordInstaller.exe`) with your Wimcord build bundled — not a custom Electron wrapper.
-
-**From source (dev):**
+**WimcordInstaller.exe** = official Vencord installer, renamed. Quit Discord from the tray first.
 
 ```bash
 pnpm install
@@ -22,17 +20,9 @@ pnpm run build
 pnpm run wimcord:installer
 ```
 
-Quit Discord from the system tray first. Pick your Discord install in the Vencord installer window and install.
+**Offline folder:** `pnpm run wimcord:installer:package` → run `Install Wimcord.bat`.
 
-**Offline package (local build, for testing):**
-
-```bash
-pnpm run wimcord:installer:package
-```
-
-Then run **`Install Wimcord.bat`** inside `release/wimcord-installer-<version>/` (always use the `.bat`, not `WimcordInstaller.exe` alone).
-
-Older GitHub releases shipped an experimental Electron installer; prefer the flow above until a new release is tested.
+**CLI:** `pnpm run wimcord:installer:cli`
 
 ---
 
@@ -46,7 +36,7 @@ Older GitHub releases shipped an experimental Electron installer; prefer the flo
 | **UI tweak pack** | Minimal polish plugins, gated off until you enable them. |
 | **Crash diagnostics** | Optional local logs and heartbeats to debug restarts — nothing uploaded unless you share files yourself. |
 | **Wimcord badges** | Optional registry; only your **Discord user id** is sent if you opt in — never your token. |
-| **Installer** | Official Vencord GUI installer, pointed at the Wimcord build. |
+| **Installer** | Official Vencord installer (`WimcordInstaller.exe`), pointed at your Wimcord build. |
 
 ---
 
@@ -77,13 +67,7 @@ pnpm run build
 pnpm run inject
 ```
 
-**Package for offline testing:**
-
-```bash
-pnpm run wimcord:installer:package
-```
-
-Output: `release/wimcord-installer-<version>/` — run `Install Wimcord.bat` inside it.
+Output: `release/wimcord-installer-<version>/` — run `Install Wimcord.bat`
 
 ---
 
@@ -95,7 +79,7 @@ Output: `release/wimcord-installer-<version>/` — run `Install Wimcord.bat` ins
 | `src/wimcord-plugins/` | First-party plugins (panel, updater, perf, badges, …) |
 | `src/plugins/` | Upstream Vencord plugins |
 | `src/userplugins/` | Local-only plugins (gitignored) |
-| `installer/` | Portable Windows installer (Electron + Vencord CLI) |
+| `scripts/installer-lib/` | Discord detect / kill helpers for CLI |
 | `docs/` | Security, contributing, badge API, examples |
 
 ---
