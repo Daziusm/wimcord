@@ -24,7 +24,7 @@ import { Separator } from "@/components/ui/separator";
 import { type InstallerView, useInstaller } from "@/hooks/useInstaller";
 import { cn } from "@/lib/utils";
 
-const VERSION = "0.1.0";
+const VERSION = "0.1.1";
 
 const NAV: { id: InstallerView; label: string; icon: typeof Home }[] = [
     { id: "overview", label: "Overview", icon: Home },
