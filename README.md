@@ -10,14 +10,29 @@ Wimcord is a desktop client mod with a focused first-party layer on top of the f
 
 ---
 
-## Download (Windows)
+## Install (Windows)
 
-1. Grab **`Wimcord-Installer-0.1.3.exe`** from the [latest release](https://github.com/Daziusm/wimcord/releases/latest).
-2. Double-click it — no setup wizard, no Node.js.
-3. Pick **Stable / PTB / Canary** (or browse to a custom folder).
-4. Click **Install**, then restart Discord when prompted.
+Uses **[Vencord’s official installer](https://github.com/Vencord/Installer)** (`VencordInstaller.exe`) with your Wimcord build bundled — not a custom Electron wrapper.
 
-Quit Discord fully first (system tray → Quit). The installer window **stays open** while patching — use **Logs** to follow progress.
+**From source (dev):**
+
+```bash
+pnpm install
+pnpm run build
+pnpm run wimcord:installer
+```
+
+Quit Discord from the system tray first. Pick your Discord install in the Vencord installer window and install.
+
+**Offline package (local build, for testing):**
+
+```bash
+pnpm run wimcord:installer:package
+```
+
+Then run **`Install Wimcord.bat`** inside `release/wimcord-installer-<version>/` (always use the `.bat`, not `WimcordInstaller.exe` alone).
+
+Older GitHub releases shipped an experimental Electron installer; prefer the flow above until a new release is tested.
 
 ---
 
@@ -31,7 +46,7 @@ Quit Discord fully first (system tray → Quit). The installer window **stays op
 | **UI tweak pack** | Minimal polish plugins, gated off until you enable them. |
 | **Crash diagnostics** | Optional local logs and heartbeats to debug restarts — nothing uploaded unless you share files yourself. |
 | **Wimcord badges** | Optional registry; only your **Discord user id** is sent if you opt in — never your token. |
-| **Portable installer** | One `.exe`, patch in place, uninstall from the same app. |
+| **Installer** | Official Vencord GUI installer, pointed at the Wimcord build. |
 
 ---
 
@@ -51,12 +66,11 @@ Requirements: [Node.js](https://nodejs.org/) 20+, [pnpm](https://pnpm.io/), Git.
 git clone https://github.com/Daziusm/wimcord.git
 cd wimcord
 pnpm install
-pnpm run wimcord:installer:setup   # once — downloads Electron for the GUI
-pnpm run wimcord:installer:build-ui
+pnpm run build
 pnpm run wimcord:installer
 ```
 
-Pick Discord → **Build** → **Install**. CLI alternative:
+CLI alternative (no GUI):
 
 ```bash
 pnpm run build

@@ -1,37 +1,31 @@
-# Wimcord Installer
+# Wimcord install (Windows)
 
-Electron GUI that patches Discord using the official [Vencord Installer CLI](https://github.com/Vencord/Installer).
-
-## Dev mode
-
-From the repo root:
+## Recommended: Vencord’s official installer
 
 ```bash
-pnpm install
-pnpm run wimcord:installer:setup
-pnpm run wimcord:installer:build-ui
+# from repo root
+pnpm run build
 pnpm run wimcord:installer
 ```
 
-Requires Node.js and pnpm. You must **Build** before **Install**.
+Opens **`VencordInstaller.exe`** with `VENCORD_USER_DATA_DIR` set to this repo so it patches Discord with Wimcord’s `dist/`.
 
-## Release `.exe`
+Offline folder for testers:
 
 ```bash
-pnpm run wimcord:installer:exe
+pnpm run wimcord:installer:package
 ```
 
-This command:
+Output: `release/wimcord-installer-<version>/`  
+Run **`Install Wimcord.bat`** (sets env vars, then starts the GUI).
 
-1. Builds Wimcord (`dist/`)
-2. Downloads `VencordInstallerCli.exe`
-3. Builds the installer UI
-4. Runs `electron-builder` (single portable `.exe`)
+## CLI only
 
-Output: `release/installer/Wimcord-Installer-<version>.exe`
+```bash
+pnpm run build
+pnpm run wimcord:installer:cli
+```
 
-### Safe testing (important)
+## Deprecated: custom Electron installer
 
-- **Close Cursor (or VS Code) before running the built installer** if you test install/patch — the installer only kills `Discord.exe` / PTB / Canary, not generic Electron apps, but patching still restarts processes.
-- **Do not** run broad `taskkill` on `electron.exe` — that will close Cursor, Slack, VS Code, etc.
-- If a previous build left `release/installer/win-unpacked` locked, close any **Wimcord Installer** window, then delete that folder manually before rebuilding (do not kill all Electron processes).
+`wimcord:installer:electron` / `wimcord:installer:electron:exe` — experimental UI that conflicted with Discord file locks. Do not ship to users until reworked.
