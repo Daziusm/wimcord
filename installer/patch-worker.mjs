@@ -75,12 +75,14 @@ export async function runPatchWorker() {
     const { ok: discordReady, log: killLog } = await killDiscordProcesses(target, chunk => process.stdout.write(chunk));
     if (killLog) process.stdout.write(killLog);
     if (!discordReady) {
+        const errMsg = "Discord patch files are locked. Quit Discord and try again.";
         writeFileSync(
             RESULT_FILE,
             JSON.stringify({
                 ok: false,
-                error: "Discord patch files are locked. Quit Discord and try again.",
-                log: killLog,
+                error: errMsg,
+                message: errMsg,
+                log: killLog || errMsg,
                 action: request.action,
                 pending: false,
             })

@@ -16,6 +16,7 @@ import {
     getInstallerPatchRequestPath,
     getInstallerResultPath,
     getInstallerSpawnCwd,
+    getInstallerStateDir,
     getWimcordRoot,
     isPackagedInstaller,
 } from "./paths.mjs";
@@ -138,6 +139,35 @@ function installerTarget(options) {
 
 const PATCH_ACTIONS = new Set(["install", "repair", "uninstall"]);
 
+/** Start patch worker after this process exits so we do not hold Discord's app.asar open. */
+function schedulePackagedPatchWorker() {
+    ensureWimcordRootEnv();
+    const exe = process.execPath.replace(/'/g, "''");
+    const entry = ENTRY.replace(/'/g, "''");
+    const cwd = getInstallerSpawnCwd().replace(/'/g, "''");
+    const root = getWimcordRoot().replace(/'/g, "''");
+    const state = getInstallerStateDir().replace(/'/g, "''");
+
+    const ps = `
+$ErrorActionPreference = 'SilentlyContinue'
+Start-Sleep -Seconds 3
+$env:ELECTRON_RUN_AS_NODE = '1'
+$env:WIMCORD_PATCH_WORKER = '1'
+$env:WIMCORD_INSTALLER_PACKAGED = '1'
+$env:VENCORD_USER_DATA_DIR = '${root}'
+$env:WIMCORD_ROOT = '${root}'
+$env:WIMCORD_INSTALLER_STATE_DIR = '${state}'
+Set-Location '${cwd}'
+& '${exe}' '${entry}'
+`;
+
+    spawn("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps], {
+        detached: true,
+        stdio: "ignore",
+        windowsHide: true,
+    }).unref();
+}
+
 async function runInstallerAction(action, options = {}) {
     const useHandoff =
         process.platform === "win32" &&
@@ -159,20 +189,7 @@ async function runInstallerAction(action, options = {}) {
                 status: "Patching Discord — a console window may open briefly…",
                 log: "\n[Wimcord] Closing UI so Discord files can be patched.\n",
             });
-            const env = {
-                ...process.env,
-                ELECTRON_RUN_AS_NODE: "1",
-                WIMCORD_PATCH_WORKER: "1",
-                WIMCORD_INSTALLER_PACKAGED: "1",
-            };
-            ensureWimcordRootEnv();
-            spawn(process.execPath, [ENTRY], {
-                cwd: getInstallerSpawnCwd(),
-                env,
-                detached: true,
-                stdio: "inherit",
-                windowsHide: false,
-            });
+            schedulePackagedPatchWorker();
         } else {
             sendProgress({
                 status: "Handing off to launcher — watch the terminal for progress…",
@@ -180,7 +197,7 @@ async function runInstallerAction(action, options = {}) {
             });
         }
 
-        setTimeout(() => app.quit(), 300);
+        setTimeout(() => app.quit(), 150);
         return { ok: true, pending: true };
     }
 
@@ -341,7 +358,10 @@ app.whenReady().then(async () => {
 
     ipcMain.handle("wimcord-installer-get-info", () => {
         const release = isPackagedInstaller();
-        const patcher = join(ROOT, "dist", "patcher.js");
+        let patcher = join(getWimcordRoot(), "dist", "patcher.js");
+        if (!existsSync(patcher) && process.resourcesPath) {
+            patcher = join(process.resourcesPath, "wimcord", "dist", "patcher.js");
+        }
         return {
             release,
             built: existsSync(patcher),

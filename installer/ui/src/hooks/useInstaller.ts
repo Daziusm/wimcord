@@ -95,8 +95,10 @@ export function useInstaller() {
         api()
             .getInfo?.()
             .then(info => {
-                if (info?.release) setReleaseMode(true);
-                if (info?.release && info.built) {
+                if (info?.release) {
+                    setReleaseMode(true);
+                    setBuilt(Boolean(info.built));
+                } else if (info?.built) {
                     setBuilt(true);
                 }
             })
@@ -113,9 +115,10 @@ export function useInstaller() {
                 info.title = res.message;
             }
             setCompletion(info);
-            setStatus(info.title);
+            setStatus(res.ok ? info.title : `${info.title}: ${info.description}`);
 
             if (res.log) setLog(res.log);
+            else if (!res.ok && res.error) setLog(res.error + "\n");
             setOutcome(res.ok ? "success" : "error");
 
             if (res.ok) {

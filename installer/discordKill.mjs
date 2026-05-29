@@ -18,8 +18,30 @@ function sleep(ms) {
     return new Promise(r => setTimeout(r, ms));
 }
 
+/** Kill every Discord-branded process (broader than fixed exe list). */
+function killAllDiscordNamedProcesses() {
+    const script = `
+Get-Process -ErrorAction SilentlyContinue |
+  Where-Object { $_.ProcessName -like 'Discord*' } |
+  ForEach-Object {
+    Write-Output "Stopping $($_.ProcessName) (PID $($_.Id))"
+    Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue
+  }
+`;
+    try {
+        return execFileSync("powershell", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script], {
+            encoding: "utf8",
+            windowsHide: true,
+            timeout: 15000,
+        }).trim();
+    } catch {
+        return "";
+    }
+}
+
 export function forceKillDiscordSync() {
-    let log = "";
+    let log = killAllDiscordNamedProcesses();
+    if (log) log += "\n";
 
     for (const name of DISCORD_IMAGES) {
         try {
@@ -129,15 +151,22 @@ export function canRenamePatchFiles(installPath) {
  * @param {string | null} installPath
  */
 async function waitUntilPatchable(installPath, onLog) {
-    for (let i = 0; i < 12; i++) {
+    const resources = installPath ? getLatestResourcesDir(installPath) : null;
+    const appAsar = resources ? join(resources, "app.asar") : null;
+
+    for (let i = 0; i < 24; i++) {
         const check = canRenamePatchFiles(installPath);
         if (check.ok) return { ok: true };
 
         if (i === 0 || i % 3 === 0) {
-            onLog?.(`[Wimcord] app.asar still locked (${check.code}) — waiting…\n`);
+            onLog?.(`[Wimcord] app.asar still locked (${check.code ?? "EBUSY"}) — waiting…\n`);
+            if (appAsar) onLog?.(`  File: ${appAsar}\n`);
             const procs = listDiscordRelatedProcesses(installPath);
-            for (const p of procs.slice(0, 8)) {
+            for (const p of procs.slice(0, 10)) {
                 onLog?.(`  • ${p.Name} (PID ${p.ProcessId}) ${p.ExecutablePath ?? ""}\n`);
+            }
+            if (!procs.length) {
+                onLog?.("  • No Discord.exe processes listed — another app may hold the file.\n");
             }
         }
 
@@ -146,7 +175,7 @@ async function waitUntilPatchable(installPath, onLog) {
             const stopped = killProcessesUnderInstallPath(installPath);
             if (stopped) onLog?.(`${stopped}\n`);
         }
-        await sleep(1500);
+        await sleep(i < 4 ? 2000 : 1500);
     }
 
     return { ok: false };
@@ -181,9 +210,10 @@ export async function killDiscordProcesses(target = null, onLog) {
     const tail = `
 [Wimcord] Discord patch files are still locked.
 
-• Quit Discord (system tray)
-• Close this installer — the Electron window itself can lock Discord on Windows; patching runs in a separate process
-• Task Manager → end Discord* tasks, then try again
+• Quit Discord completely (system tray → Quit)
+• Task Manager → end every "Discord" process
+• Wait a few seconds, then run Install again
+• If it still fails, reboot once (Windows sometimes keeps a hidden handle on app.asar)
 `;
     onLog?.(tail);
     return { log: log + tail, ok: false };

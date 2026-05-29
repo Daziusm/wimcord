@@ -24,7 +24,7 @@ import { Separator } from "@/components/ui/separator";
 import { type InstallerView, useInstaller } from "@/hooks/useInstaller";
 import { cn } from "@/lib/utils";
 
-const VERSION = "0.1.1";
+const VERSION = "0.1.2";
 
 const NAV: { id: InstallerView; label: string; icon: typeof Home }[] = [
     { id: "overview", label: "Overview", icon: Home },
@@ -136,7 +136,7 @@ export default function App() {
                         )}
                         {i.view === "install" && (
                             <InstallPane
-                                built={i.built}
+                                built={i.built || i.releaseMode}
                                 restartDiscord={i.restartDiscord}
                                 onRestartChange={i.setRestartDiscord}
                                 busy={i.busy}
@@ -187,7 +187,7 @@ function SidebarActions({
                     <Button
                         size="sm"
                         className="w-full"
-                        disabled={i.busy || !i.built}
+                        disabled={i.busy || (!i.built && !i.releaseMode)}
                         onClick={() => i.runAction("install")}
                     >
                         {i.busy && i.operation === "install" ? "Installing…" : "Install"}
