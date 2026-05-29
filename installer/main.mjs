@@ -17,6 +17,7 @@ import {
     getInstallerStateDir,
     getWimcordRoot,
     isPackagedInstaller,
+    materializeHandoffScript,
 } from "./paths.mjs";
 import { cliArgsForAction, ensureInstallerBinary, runInstallerCliAsync } from "./wimcordInstallerLib.mjs";
 
@@ -135,8 +136,6 @@ function installerTarget(options) {
 
 const PATCH_ACTIONS = new Set(["install", "repair", "uninstall"]);
 
-const HANDOFF_PS1 = join(__dirname, "packaged-handoff.ps1");
-
 /** Quit Electron, run VencordInstallerCli only (no Electron during patch), reopen GUI. */
 async function runPackagedHandoff(action, options = {}) {
     const target = installerTarget(options);
@@ -158,10 +157,29 @@ async function runPackagedHandoff(action, options = {}) {
         }
     }
 
+    let handoffScript;
+    try {
+        handoffScript = materializeHandoffScript();
+    } catch (e) {
+        return {
+            ok: false,
+            stdout: "",
+            stderr: "",
+            error: e?.message ?? String(e),
+        };
+    }
+
+    writeFileSync(
+        join(stateDir, "handoff-launch.json"),
+        JSON.stringify({ action, target, script: handoffScript, startedAt: Date.now() }, null, 2)
+    );
+
     sendProgress({
         status: "Closing installer — Discord will be patched, then this app reopens…",
-        log: "\n[Wimcord] The window must close so Electron does not lock Discord's app.asar.\n" +
-            "[Wimcord] Vencord Installer CLI runs next; the GUI reopens when finished.\n",
+        log:
+            "\n[Wimcord] The window must close so Electron does not lock Discord's app.asar.\n" +
+            "[Wimcord] Vencord Installer CLI runs next; the GUI reopens when finished.\n" +
+            `[Wimcord] Handoff log: ${join(stateDir, "handoff.log")}\n`,
     });
 
     spawn(
@@ -171,7 +189,7 @@ async function runPackagedHandoff(action, options = {}) {
             "-ExecutionPolicy",
             "Bypass",
             "-File",
-            HANDOFF_PS1,
+            handoffScript,
             "-ParentPid",
             String(process.pid),
             "-CliPath",

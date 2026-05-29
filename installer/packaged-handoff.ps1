@@ -14,11 +14,20 @@ param(
 )
 
 $ErrorActionPreference = "Continue"
+$handoffLog = Join-Path $StateDir "handoff.log"
+
+function Log($msg) {
+    $line = "[$(Get-Date -Format 'HH:mm:ss')] $msg"
+    Add-Content -Path $handoffLog -Value $line -Encoding utf8
+}
+
+Log "handoff started (parent PID $ParentPid)"
 
 while (Get-Process -Id $ParentPid -ErrorAction SilentlyContinue) {
     Start-Sleep -Milliseconds 300
 }
-Start-Sleep -Seconds 2
+Log "parent exited — waiting for file handles"
+Start-Sleep -Seconds 4
 
 $env:VENCORD_USER_DATA_DIR = $WimcordRoot
 $env:WIMCORD_ROOT = $WimcordRoot
@@ -28,9 +37,11 @@ $env:WIMCORD_INSTALLER_STATE_DIR = $StateDir
 $cliArgs = @($CliArgsJson | ConvertFrom-Json)
 $logFile = Join-Path $StateDir "installer-last-run.log"
 
+Log "running: $CliPath $($cliArgs -join ' ')"
 "" | Set-Content -Path $logFile -Encoding utf8
 & $CliPath @cliArgs *>&1 | Tee-Object -FilePath $logFile -Append
 $code = $LASTEXITCODE
+Log "CLI exit code $code"
 $log = Get-Content -Path $logFile -Raw -ErrorAction SilentlyContinue
 
 $ok = $code -eq 0
@@ -59,6 +70,9 @@ if ($ok -and $RestartDiscord -eq "1" -and $UpdateExe -and (Test-Path $UpdateExe)
     Start-Process -FilePath $UpdateExe -ArgumentList "--processStart", $ProcessName
 }
 
+$installerDir = Split-Path -Parent $InstallerExe
 $env:WIMCORD_INSTALLER_PACKAGED = "1"
 $env:WIMCORD_INSTALLER_RESULT = "1"
-Start-Process -FilePath $InstallerExe
+Log "reopening installer: $InstallerExe"
+Start-Process -FilePath $InstallerExe -WorkingDirectory $installerDir
+Log "handoff finished"

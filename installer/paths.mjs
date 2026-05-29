@@ -1,7 +1,7 @@
 /**
  * Resolve Wimcord root (dist/, scripts/) for dev vs packaged installer.
  */
-import { existsSync, mkdirSync } from "fs";
+import { copyFileSync, existsSync, mkdirSync } from "fs";
 import { homedir } from "os";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
@@ -63,6 +63,24 @@ export function getInstallerPatchRequestPath() {
 
 export function getInstallerResultPath() {
     return join(ensureInstallerStateDir(), "result.json");
+}
+
+/** PowerShell cannot run scripts inside app.asar — copy to writable AppData. */
+export function materializeHandoffScript() {
+    const stateDir = ensureInstallerStateDir();
+    const dest = join(stateDir, "packaged-handoff.ps1");
+    const candidates = [
+        process.resourcesPath ? join(process.resourcesPath, "installer", "packaged-handoff.ps1") : null,
+        join(INSTALLER_DIR, "packaged-handoff.ps1"),
+    ].filter(Boolean);
+
+    for (const src of candidates) {
+        if (existsSync(src)) {
+            copyFileSync(src, dest);
+            return dest;
+        }
+    }
+    throw new Error("packaged-handoff.ps1 missing from installer bundle");
 }
 
 export function getInstallerSpawnCwd() {

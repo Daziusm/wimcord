@@ -2,7 +2,7 @@
 /**
  * Build Wimcord + installer UI, bundle Vencord CLI, produce a single portable Windows .exe.
  */
-import { copyFileSync, existsSync } from "fs";
+import { copyFileSync, existsSync, readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 
@@ -38,7 +38,17 @@ if (!existsSync(eb)) {
     runPnpm(["install"], { cwd: root });
 }
 
-console.log("[Wimcord] Packaging Windows installer (electron-builder)…");
-runExecFile(process.execPath, [eb, "--win", "--config", "electron-builder.yml"], { cwd: installerDir });
+const version = JSON.parse(readFileSync(join(root, "package.json"), "utf8")).version;
+const outRelative = `../release/installer-${version}`;
+const outDir = join(root, "release", `installer-${version}`);
+const exePath = join(outDir, `Wimcord-Installer-${version}.exe`);
 
-console.log("\n[Wimcord] Done. Output: release/installer/\n");
+console.log(`[Wimcord] Packaging Windows installer (electron-builder → ${outRelative})…`);
+console.log("[Wimcord] Tip: close any running Wimcord Installer window if a build fails with “file in use”.\n");
+runExecFile(
+    process.execPath,
+    [eb, "--win", "--config", "electron-builder.yml", `--config.directories.output=${outRelative}`],
+    { cwd: installerDir }
+);
+
+console.log(`\n[Wimcord] Done. Run:\n  ${exePath}\n`);

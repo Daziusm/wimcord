@@ -28,6 +28,8 @@ extraResources:
     to: wimcord/dist
     filter:
       - "**/*"
+  - from: packaged-handoff.ps1
+    to: installer/packaged-handoff.ps1
 
 win:
   target:
