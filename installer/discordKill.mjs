@@ -166,7 +166,9 @@ async function waitUntilPatchable(installPath, onLog) {
                 onLog?.(`  • ${p.Name} (PID ${p.ProcessId}) ${p.ExecutablePath ?? ""}\n`);
             }
             if (!procs.length) {
-                onLog?.("  • No Discord.exe processes listed — another app may hold the file.\n");
+                onLog?.(
+                    "  • No Discord.exe processes — if the Wimcord Installer window is still open, close it and use Install again (Electron locks app.asar).\n"
+                );
             }
         }
 

@@ -359,8 +359,8 @@ function InstallPane({
                 </Label>
             </div>
             <p className="text-sm text-muted-foreground">
-                Quit Discord from the system tray first. Click Install in the sidebar — this window stays open while
-                patching (check Logs for progress).
+                Quit Discord from the system tray first. Install will close this window briefly (Electron cannot patch
+                while open), then reopen when done. Check Logs after it returns.
             </p>
         </div>
     );

@@ -14,10 +14,11 @@ import {
     ensureWimcordRootEnv,
     getInstallerAppDir,
     getInstallerResultPath,
+    getInstallerStateDir,
     getWimcordRoot,
     isPackagedInstaller,
 } from "./paths.mjs";
-import { ensureInstallerBinary, runInstallerCliAsync } from "./wimcordInstallerLib.mjs";
+import { cliArgsForAction, ensureInstallerBinary, runInstallerCliAsync } from "./wimcordInstallerLib.mjs";
 
 const __dirname = getInstallerAppDir();
 const ROOT = ensureWimcordRootEnv();
@@ -134,16 +135,88 @@ function installerTarget(options) {
 
 const PATCH_ACTIONS = new Set(["install", "repair", "uninstall"]);
 
+const HANDOFF_PS1 = join(__dirname, "packaged-handoff.ps1");
+
+/** Quit Electron, run VencordInstallerCli only (no Electron during patch), reopen GUI. */
+async function runPackagedHandoff(action, options = {}) {
+    const target = installerTarget(options);
+    const bin = await ensureInstallerBinary(msg => sendProgress({ status: msg }));
+    const args = cliArgsForAction(action, target);
+    const root = ensureWimcordRootEnv();
+    const stateDir = getInstallerStateDir();
+    const resultPath = getInstallerResultPath();
+
+    const restart =
+        options.restartDiscord && (action === "install" || action === "repair");
+    let updateExe = "";
+    let processName = "";
+    if (restart) {
+        const found = findDiscordUpdateExe(target);
+        if (found?.updateExe) {
+            updateExe = found.updateExe;
+            processName = discordProcessName(found.install);
+        }
+    }
+
+    sendProgress({
+        status: "Closing installer — Discord will be patched, then this app reopens…",
+        log: "\n[Wimcord] The window must close so Electron does not lock Discord's app.asar.\n" +
+            "[Wimcord] Vencord Installer CLI runs next; the GUI reopens when finished.\n",
+    });
+
+    spawn(
+        "powershell.exe",
+        [
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            HANDOFF_PS1,
+            "-ParentPid",
+            String(process.pid),
+            "-CliPath",
+            bin,
+            "-CliArgsJson",
+            JSON.stringify(args),
+            "-WimcordRoot",
+            root,
+            "-StateDir",
+            stateDir,
+            "-ResultPath",
+            resultPath,
+            "-InstallerExe",
+            process.execPath,
+            "-Action",
+            action,
+            "-RestartDiscord",
+            restart ? "1" : "0",
+            "-UpdateExe",
+            updateExe,
+            "-ProcessName",
+            processName,
+        ],
+        { detached: true, stdio: "ignore", windowsHide: true }
+    ).unref();
+
+    setTimeout(() => app.quit(), 100);
+    return { ok: true, pending: true };
+}
+
 async function runInstallerAction(action, options = {}) {
-    // Dev launcher only: Electron dev build must exit before patching (see wimcord-installer-gui.mjs).
-    // Packaged .exe patches in-process — window stays open, progress shows in Logs.
-    const useHandoff =
+    if (
         process.platform === "win32" &&
         PATCH_ACTIONS.has(action) &&
-        !isPackagedInstaller() &&
+        isPackagedInstaller()
+    ) {
+        return runPackagedHandoff(action, options);
+    }
+
+    const useDevHandoff =
+        process.platform === "win32" &&
+        PATCH_ACTIONS.has(action) &&
         process.env.WIMCORD_INSTALLER_LAUNCHER === "1";
 
-    if (useHandoff) {
+    if (useDevHandoff) {
         const { getInstallerPatchRequestPath } = await import("./paths.mjs");
         writeFileSync(
             getInstallerPatchRequestPath(),

@@ -10,6 +10,7 @@ files:
   - entry.mjs
   - main.mjs
   - patch-worker.mjs
+  - packaged-handoff.ps1
   - paths.mjs
   - discordDetect.mjs
   - discordKill.mjs

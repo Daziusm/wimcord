@@ -267,7 +267,11 @@ export function useInstaller() {
                     restartDiscord: shouldRestart,
                 });
                 if (res.pending) {
-                    setStatus("Patching in your terminal — this window will reopen when done.");
+                    setStatus(
+                        releaseMode
+                            ? "Installer closing to patch Discord — it will reopen automatically."
+                            : "Patching in your terminal — this window will reopen when done."
+                    );
                     setBusy(false);
                     setOperation("idle");
                     return;
