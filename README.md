@@ -12,12 +12,12 @@ Wimcord is a desktop client mod with a focused first-party layer on top of the f
 
 ## Download (Windows)
 
-1. Grab **`Wimcord-Installer-0.1.1.exe`** from the [latest release](https://github.com/Daziusm/wimcord/releases/latest).
+1. Grab **`Wimcord-Installer-0.1.3.exe`** from the [latest release](https://github.com/Daziusm/wimcord/releases/latest).
 2. Double-click it — no setup wizard, no Node.js.
 3. Pick **Stable / PTB / Canary** (or browse to a custom folder).
 4. Click **Install**, then restart Discord when prompted.
 
-Quit Discord fully first (including the system tray icon).
+Quit Discord fully first (system tray → Quit). The installer window **stays open** while patching — use **Logs** to follow progress.
 
 ---
 

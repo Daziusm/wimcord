@@ -24,7 +24,7 @@ import { Separator } from "@/components/ui/separator";
 import { type InstallerView, useInstaller } from "@/hooks/useInstaller";
 import { cn } from "@/lib/utils";
 
-const VERSION = "0.1.2";
+const VERSION = "0.1.3";
 
 const NAV: { id: InstallerView; label: string; icon: typeof Home }[] = [
     { id: "overview", label: "Overview", icon: Home },
@@ -358,7 +358,10 @@ function InstallPane({
                     Restart Discord after install
                 </Label>
             </div>
-            <p className="text-sm text-muted-foreground">Click Install in the sidebar when ready.</p>
+            <p className="text-sm text-muted-foreground">
+                Quit Discord from the system tray first. Click Install in the sidebar — this window stays open while
+                patching (check Logs for progress).
+            </p>
         </div>
     );
 }

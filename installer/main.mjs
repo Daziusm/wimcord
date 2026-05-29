@@ -13,10 +13,7 @@ import { findDiscordUpdateExe, resolvePnpmBinary } from "./utils.mjs";
 import {
     ensureWimcordRootEnv,
     getInstallerAppDir,
-    getInstallerPatchRequestPath,
     getInstallerResultPath,
-    getInstallerSpawnCwd,
-    getInstallerStateDir,
     getWimcordRoot,
     isPackagedInstaller,
 } from "./paths.mjs";
@@ -24,9 +21,7 @@ import { ensureInstallerBinary, runInstallerCliAsync } from "./wimcordInstallerL
 
 const __dirname = getInstallerAppDir();
 const ROOT = ensureWimcordRootEnv();
-const PATCH_REQUEST = getInstallerPatchRequestPath();
 const RESULT_FILE = getInstallerResultPath();
-const ENTRY = join(__dirname, "entry.mjs");
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
 if (!gotSingleInstanceLock) {
@@ -139,64 +134,29 @@ function installerTarget(options) {
 
 const PATCH_ACTIONS = new Set(["install", "repair", "uninstall"]);
 
-/** Start patch worker after this process exits so we do not hold Discord's app.asar open. */
-function schedulePackagedPatchWorker() {
-    ensureWimcordRootEnv();
-    const exe = process.execPath.replace(/'/g, "''");
-    const entry = ENTRY.replace(/'/g, "''");
-    const cwd = getInstallerSpawnCwd().replace(/'/g, "''");
-    const root = getWimcordRoot().replace(/'/g, "''");
-    const state = getInstallerStateDir().replace(/'/g, "''");
-
-    const ps = `
-$ErrorActionPreference = 'SilentlyContinue'
-Start-Sleep -Seconds 3
-$env:ELECTRON_RUN_AS_NODE = '1'
-$env:WIMCORD_PATCH_WORKER = '1'
-$env:WIMCORD_INSTALLER_PACKAGED = '1'
-$env:VENCORD_USER_DATA_DIR = '${root}'
-$env:WIMCORD_ROOT = '${root}'
-$env:WIMCORD_INSTALLER_STATE_DIR = '${state}'
-Set-Location '${cwd}'
-& '${exe}' '${entry}'
-`;
-
-    spawn("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps], {
-        detached: true,
-        stdio: "ignore",
-        windowsHide: true,
-    }).unref();
-}
-
 async function runInstallerAction(action, options = {}) {
+    // Dev launcher only: Electron dev build must exit before patching (see wimcord-installer-gui.mjs).
+    // Packaged .exe patches in-process — window stays open, progress shows in Logs.
     const useHandoff =
         process.platform === "win32" &&
         PATCH_ACTIONS.has(action) &&
-        (isPackagedInstaller() || process.env.WIMCORD_INSTALLER_LAUNCHER === "1");
+        !isPackagedInstaller() &&
+        process.env.WIMCORD_INSTALLER_LAUNCHER === "1";
 
     if (useHandoff) {
+        const { getInstallerPatchRequestPath } = await import("./paths.mjs");
         writeFileSync(
-            PATCH_REQUEST,
+            getInstallerPatchRequestPath(),
             JSON.stringify({
                 action,
                 options,
                 target: installerTarget(options),
             })
         );
-
-        if (isPackagedInstaller()) {
-            sendProgress({
-                status: "Patching Discord — a console window may open briefly…",
-                log: "\n[Wimcord] Closing UI so Discord files can be patched.\n",
-            });
-            schedulePackagedPatchWorker();
-        } else {
-            sendProgress({
-                status: "Handing off to launcher — watch the terminal for progress…",
-                log: "\n[Wimcord] UI closing so Discord files can be patched. Reopens when done.\n",
-            });
-        }
-
+        sendProgress({
+            status: "Handing off to launcher — watch the terminal for progress…",
+            log: "\n[Wimcord] UI closing so Discord files can be patched. Reopens when done.\n",
+        });
         setTimeout(() => app.quit(), 150);
         return { ok: true, pending: true };
     }

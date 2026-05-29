@@ -250,7 +250,9 @@ export function useInstaller() {
             setOperation(action === "install" ? "install" : action === "repair" ? "repair" : "uninstall");
             setStatus(
                 action === "install"
-                    ? "Installing into Discord…"
+                    ? releaseMode
+                        ? "Closing Discord and installing Wimcord… (watch Logs)"
+                        : "Installing into Discord…"
                     : action === "uninstall"
                         ? "Removing patch…"
                         : "Repairing…"
@@ -265,11 +267,7 @@ export function useInstaller() {
                     restartDiscord: shouldRestart,
                 });
                 if (res.pending) {
-                    setStatus(
-                        releaseMode
-                            ? "Patching Discord — the installer will reopen when finished."
-                            : "Patching in your terminal — this window will reopen when done."
-                    );
+                    setStatus("Patching in your terminal — this window will reopen when done.");
                     setBusy(false);
                     setOperation("idle");
                     return;
