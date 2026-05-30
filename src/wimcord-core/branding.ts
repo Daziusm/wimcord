@@ -7,7 +7,7 @@ export const WIMCORD_BRAND = {
     name: "Wimcord",
     shortName: "Wimcord",
     tagline: "Stable, customizable Discord — built on Vencord",
-    version: "0.1.6",
+    version: "0.1.7",
 
     /** User Settings sidebar section */
     settingsSectionTitle: "Wimcord",
