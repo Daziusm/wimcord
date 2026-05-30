@@ -7,6 +7,7 @@ import type { BadgeUserArgs, ProfileBadge } from "@api/Badges";
 import { React } from "@webpack/common";
 
 import { getBadgeIconFallbacks, resolveBadgeIconUrl } from "./badgeIconUrl";
+import { profileBadgeDisplayStyle } from "./profileBadgeSize";
 
 type Props = ProfileBadge & BadgeUserArgs;
 
@@ -23,12 +24,15 @@ export function WimcordBadgeImage({ iconSrc, props: imgProps }: Props) {
 
     if (!src) return null;
 
+    const { style: propStyle, ...restImgProps } = imgProps ?? {};
+
     return (
         <img
             alt=""
             aria-hidden
             src={src}
-            {...imgProps}
+            {...restImgProps}
+            style={profileBadgeDisplayStyle(propStyle as Record<string, string | number | undefined>)}
             onError={() => {
                 setIndex(i => (i + 1 < candidates.length ? i + 1 : i));
             }}

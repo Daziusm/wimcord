@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+import { PROFILE_BADGE_CDN_PX } from "./profileBadgeSize";
+
 const DISCORD_CDN_HOSTS = new Set(["cdn.discordapp.com", "media.discordapp.net"]);
 
 /**
@@ -20,13 +22,17 @@ export function resolveBadgeIconUrl(url: string): string {
 
         if (parsed.pathname.includes("/attachments/")) {
             parsed.hostname = "media.discordapp.net";
-            parsed.search = "";
+            parsed.searchParams.set("width", String(PROFILE_BADGE_CDN_PX));
+            parsed.searchParams.set("height", String(PROFILE_BADGE_CDN_PX));
+            parsed.searchParams.delete("ex");
+            parsed.searchParams.delete("is");
+            parsed.searchParams.delete("hm");
             return parsed.href;
         }
 
         if (parsed.pathname.includes("/emojis/")) {
             parsed.hostname = "cdn.discordapp.com";
-            if (!parsed.searchParams.has("size")) parsed.searchParams.set("size", "96");
+            if (!parsed.searchParams.has("size")) parsed.searchParams.set("size", String(PROFILE_BADGE_CDN_PX));
             parsed.searchParams.delete("ex");
             parsed.searchParams.delete("is");
             parsed.searchParams.delete("hm");

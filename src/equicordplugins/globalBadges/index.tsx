@@ -15,6 +15,8 @@ import { openInviteModal } from "@utils/discord";
 import definePlugin from "@utils/types";
 import { ContextMenuApi, React, Toasts, UserStore } from "@webpack/common";
 
+import { profileBadgeDisplayStyle } from "@wimcord-core/profileBadgeSize";
+
 import { openBadgeModal } from "./badgeModal";
 import { settings } from "./settings";
 import { cl, GlobalBadges, INVITE_LINK, loadBadges } from "./utils";
@@ -67,10 +69,7 @@ export default definePlugin({
             description: badge.tooltip,
             position: BadgePosition.START,
             props: {
-                style: {
-                    borderRadius: "50%",
-                    transform: "scale(0.9)"
-                }
+                style: profileBadgeDisplayStyle({ borderRadius: "50%" }),
             },
             onContextMenu(event, badge) {
                 ContextMenuApi.openContextMenu(event, () => <BadgeContextMenu badge={badge} />);

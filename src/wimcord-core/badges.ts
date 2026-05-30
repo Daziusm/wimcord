@@ -17,6 +17,7 @@ import {
 } from "./badgeRegistry";
 import { WimcordBadgeImage } from "./badgeImage";
 import { resolveBadgeIconUrl } from "./badgeIconUrl";
+import { profileBadgeDisplayStyle } from "./profileBadgeSize";
 import { createWimcordLogger } from "./logger";
 import type { WimcordBadgeDefinition } from "./types";
 
@@ -76,7 +77,7 @@ function toProfileBadge(def: WimcordBadgeDefinition): ProfileBadge {
         link: merged.link,
         position: merged.position ?? BadgePosition.END,
         props: {
-            style: { borderRadius: "50%" },
+            style: profileBadgeDisplayStyle({ borderRadius: "50%" }),
         },
     };
 }
