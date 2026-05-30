@@ -8,6 +8,7 @@ import { getDiagnosticSessionId, resetDiagnosticSessionId } from "./diagnosticsS
 import { createWimcordLogger } from "./logger";
 import { formatConsoleArgs, serializeForLog } from "./serializeLog";
 import { getRuntimeState } from "./runtime";
+import { getPatchHealthReport } from "./patchHealth";
 import { captureRendererSnapshot } from "./snapshot";
 
 const log = createWimcordLogger("Diagnostics");
@@ -292,7 +293,12 @@ export function recordPluginDiagnostic(pluginName: string, phase: "start" | "sto
 }
 
 export function exportDiagnosticsAsText(): string {
-    return getDiagnosticEvents().map(e => {
+    const report = getPatchHealthReport();
+    const header = report
+        ? `=== Patch health (${report.ok ? "OK" : "DEGRADED"}) ===\n${report.probableCause}\nDiscord build: ${report.discordBuild}\nTested: ${report.testedDiscordBuild}\nSafe mode: ${report.safeModeActive}\n\n`
+        : "";
+
+    return header + getDiagnosticEvents().map(e => {
         const ts = new Date(e.ts).toISOString();
         const data = e.detail !== undefined ? `\n  ${JSON.stringify(e.detail, null, 2)}` : "";
         return `${ts} [${e.level}] [${e.kind}] ${e.message}${data}`;

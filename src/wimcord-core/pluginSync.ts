@@ -32,7 +32,7 @@ export async function syncWimcordPluginEnables() {
         }
     }
 
-    for (const required of ["WimcordPanel", "WimcordBadges", "WimcordUpdater"]) {
+    for (const required of ["WimcordPanel", "WimcordBadges", "WimcordBadgeAdmin", "WimcordUpdater"]) {
         if (!Settings.plugins[required]) Settings.plugins[required] = { enabled: true };
         else Settings.plugins[required].enabled = true;
     }

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Official Vencord installer binary with UI strings patched to say Wimcord.
+ * Branded Vencord Installer GUI (WimcordInstaller.exe) for local dev builds.
  */
 import { spawn } from "child_process";
 import { createWriteStream, existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";

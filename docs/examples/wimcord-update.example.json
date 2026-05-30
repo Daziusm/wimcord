@@ -1,7 +1,7 @@
 {
-  "version": "0.1.1",
-  "publishedAt": "2026-05-28",
-  "notes": "Bug fixes and stability improvements for older Discord clients.",
-  "installerUrl": "https://github.com/YOUR_USER/wimcord/releases/latest",
-  "downloadUrl": ""
+  "version": "0.1.5",
+  "publishedAt": "2026-05-28T12:00:00Z",
+  "notes": "Optional override manifest. Leave updateManifestUrl empty in wimcord.json to use GitHub Releases automatically.",
+  "installerUrl": "https://github.com/Daziusm/wimcord/releases/latest",
+  "downloadUrl": "https://github.com/Daziusm/wimcord/releases/download/v0.1.5/wimcord-dist-0.1.5.zip"
 }

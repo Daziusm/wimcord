@@ -41,6 +41,7 @@ import { get as dsGet } from "./api/DataStore";
 import { NotificationData, showNotification } from "./api/Notifications";
 import { WIMCORD_UI } from "@wimcord-core/branding";
 import { initWimcordCore, hookWimcordLifecycle } from "./wimcord-core";
+import { gateBeforeWebpackPlugins, schedulePatchHealthRechecks } from "@wimcord-core/patchHealth";
 
 import { initPluginManager, PMLogger, startAllPlugins } from "./api/PluginManager";
 import { PlainSettings, Settings, SettingsStore } from "./api/Settings";
@@ -148,7 +149,9 @@ async function runUpdateCheck() {
 
 async function init() {
     await onceReady;
+    gateBeforeWebpackPlugins();
     startAllPlugins(StartAt.WebpackReady);
+    schedulePatchHealthRechecks();
 
     syncSettings();
 

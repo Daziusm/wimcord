@@ -20,8 +20,16 @@ export interface WimcordConfig {
     diagnosticsPersistToDisk: boolean;
     /** When true, persist debug logs, console capture, and full heartbeat snapshots */
     diagnosticsVerbose: boolean;
-    /** JSON manifest URL: { "version": "0.1.1", "notes": "...", "installerUrl": "..." } */
+    /** Disable risky UI hooks when webpack probes fail (reduces crash loops) */
+    safeModeOnPatchFailure: boolean;
+    /** Show a modal when patch health fails after Discord updates */
+    patchHealthNotifyOnFailure: boolean;
+    /** Optional override URL for update JSON. Empty = check GitHub Releases API. */
     updateManifestUrl: string;
+    /** Desktop notification when a newer GitHub release exists */
+    updateNotificationsEnabled: boolean;
+    /** How often to re-check (hours). 0 = only on Discord startup. */
+    updateCheckIntervalHours: number;
     /** Who has Wimcord badges — fetched periodically (see wimcord-badges.example.json) */
     badgeRegistryUrl: string;
     /** POST endpoint — enrolls the signed-in Discord user as a Wimcord user */
@@ -67,7 +75,11 @@ const DEFAULT_CONFIG: WimcordConfig = {
     diagnosticsEnabled: true,
     diagnosticsPersistToDisk: true,
     diagnosticsVerbose: true,
+    safeModeOnPatchFailure: true,
+    patchHealthNotifyOnFailure: true,
     updateManifestUrl: "",
+    updateNotificationsEnabled: true,
+    updateCheckIntervalHours: 6,
     badgeRegistryUrl: "https://wim.wimdium.com/wimcord/badges.json",
     badgeRegisterUrl: "https://wim.wimdium.com/api/wimcord/register",
     badgeAutoRegister: true,
@@ -95,6 +107,10 @@ export async function loadWimcordConfig(): Promise<WimcordConfig> {
     if (!cached.badgeRegistryUrl?.trim()) cached.badgeRegistryUrl = DEFAULT_CONFIG.badgeRegistryUrl;
     if (!cached.badgeRegisterUrl?.trim()) cached.badgeRegisterUrl = DEFAULT_CONFIG.badgeRegisterUrl;
     if (cached.badgeAutoRegister == null) cached.badgeAutoRegister = DEFAULT_CONFIG.badgeAutoRegister;
+    if (cached.safeModeOnPatchFailure == null) cached.safeModeOnPatchFailure = DEFAULT_CONFIG.safeModeOnPatchFailure;
+    if (cached.patchHealthNotifyOnFailure == null) cached.patchHealthNotifyOnFailure = DEFAULT_CONFIG.patchHealthNotifyOnFailure;
+    if (cached.updateNotificationsEnabled == null) cached.updateNotificationsEnabled = DEFAULT_CONFIG.updateNotificationsEnabled;
+    if (cached.updateCheckIntervalHours == null) cached.updateCheckIntervalHours = DEFAULT_CONFIG.updateCheckIntervalHours;
     return cached;
 }
 
@@ -105,6 +121,10 @@ export function getWimcordConfigSync(): WimcordConfig {
     if (!cached.badgeRegistryUrl?.trim()) cached.badgeRegistryUrl = DEFAULT_CONFIG.badgeRegistryUrl;
     if (!cached.badgeRegisterUrl?.trim()) cached.badgeRegisterUrl = DEFAULT_CONFIG.badgeRegisterUrl;
     if (cached.badgeAutoRegister == null) cached.badgeAutoRegister = DEFAULT_CONFIG.badgeAutoRegister;
+    if (cached.safeModeOnPatchFailure == null) cached.safeModeOnPatchFailure = DEFAULT_CONFIG.safeModeOnPatchFailure;
+    if (cached.patchHealthNotifyOnFailure == null) cached.patchHealthNotifyOnFailure = DEFAULT_CONFIG.patchHealthNotifyOnFailure;
+    if (cached.updateNotificationsEnabled == null) cached.updateNotificationsEnabled = DEFAULT_CONFIG.updateNotificationsEnabled;
+    if (cached.updateCheckIntervalHours == null) cached.updateCheckIntervalHours = DEFAULT_CONFIG.updateCheckIntervalHours;
     return cached;
 }
 

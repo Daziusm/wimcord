@@ -1,6 +1,6 @@
 {
     "name": "wimcord",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "description": "Stable, customizable Discord client mod (Vencord fork)",
     "homepage": "https://github.com/Daziusm/wimcord",
     "bugs": {
@@ -32,6 +32,7 @@
         "wimcord:clean": "node scripts/wimcord-cli.mjs clean",
         "wimcord:installer": "node scripts/wimcord-installer.mjs",
         "wimcord:installer:package": "node scripts/build-wimcord-installer-package.mjs",
+        "wimcord:package:dist-zip": "node scripts/package-dist-zip.mjs",
         "wimcord:installer:cli": "node scripts/runInstaller.mjs -- --install",
         "uninject": "node scripts/runInstaller.mjs -- --uninstall",
         "repair": "node scripts/runInstaller.mjs -- --repair",
@@ -48,6 +49,7 @@
         "@vap/shiki": "0.10.5",
         "fflate": "^0.8.2",
         "gifenc": "github:mattdesl/gifenc#64842fca317b112a8590f8fef2bf3825da8f6fe3",
+        "jsqr": "1.4.0",
         "monaco-editor": "^0.55.1",
         "nanoid": "^5.1.6",
         "virtual-merge": "^1.0.1"

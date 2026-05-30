@@ -7,14 +7,34 @@
 import ErrorBoundary from "@components/ErrorBoundary";
 import { Logger } from "@utils/Logger";
 import { classes } from "@utils/misc";
-import { findComponentByCodeLazy, findCssClassesLazy } from "@webpack";
-import { Clickable,Tooltip, useEffect, useState } from "@webpack/common";
+import { isHeaderBarInjectionSafe, isNativeHeaderBarIconSafe } from "@wimcord-core/patchHealth";
+import { findComponentByCode } from "@webpack";
+import { Clickable, Tooltip, useEffect, useState } from "@webpack/common";
 import type { ComponentType, JSX, MouseEventHandler, ReactNode } from "react";
 
 const logger = new Logger("HeaderBarAPI");
 
-const HeaderBarClasses = findCssClassesLazy("clickable", "withHighlight");
-const HeaderBarIcon = findComponentByCodeLazy(".HEADER_BAR_BADGE_TOP:", '"aria-haspopup":') as ComponentType<ChannelToolbarButtonProps>;
+let cachedHeaderBarIcon: ComponentType<ChannelToolbarButtonProps> | null | undefined;
+
+function resolveHeaderBarIcon(): ComponentType<ChannelToolbarButtonProps> | null {
+    if (!isNativeHeaderBarIconSafe()) return null;
+    if (cachedHeaderBarIcon !== undefined) return cachedHeaderBarIcon;
+    try {
+        cachedHeaderBarIcon = findComponentByCode(".HEADER_BAR_BADGE_TOP:", '"aria-haspopup":') as ComponentType<ChannelToolbarButtonProps>;
+    } catch {
+        cachedHeaderBarIcon = null;
+    }
+    if (!cachedHeaderBarIcon) cachedHeaderBarIcon = null;
+    return cachedHeaderBarIcon;
+}
+
+const headerBarBtnStyle = {
+    boxSizing: "content-box" as const,
+    justifyContent: "center",
+    color: "oklab(0.745437 0.00131872 -0.00849736)",
+    margin: "0 4px",
+    cursor: "pointer",
+};
 
 export interface HeaderBarButtonProps {
     /** The icon component to render inside the button */
@@ -101,8 +121,8 @@ export function HeaderBarButton(props: HeaderBarButtonProps & { ref?: React.RefO
             {({ onMouseEnter, onMouseLeave }) => (
                 <Clickable
                     {...{ innerRef: ref } as any}
-                    className={classes(HeaderBarClasses.clickable, HeaderBarClasses.withHighlight, className)}
-                    style={{ width: iconSize, boxSizing: "content-box", justifyContent: "center", color: "oklab(0.745437 0.00131872 -0.00849736)", margin: "0 4px", cursor: "pointer" }}
+                    className={classes("vc-header-bar-btn", className)}
+                    style={{ width: iconSize, ...headerBarBtnStyle }}
                     onClick={onClick}
                     onContextMenu={onContextMenu}
                     onMouseEnter={onMouseEnter}
@@ -132,6 +152,8 @@ export function HeaderBarButton(props: HeaderBarButtonProps & { ref?: React.RefO
  * />
  */
 export function ChannelToolbarButton(props: ChannelToolbarButtonProps) {
+    const HeaderBarIcon = resolveHeaderBarIcon();
+    if (!HeaderBarIcon) return null;
     return <HeaderBarIcon {...props} />;
 }
 
@@ -371,10 +393,12 @@ function ChannelToolbarButtons() {
 
 /** @internal Injected by HeaderBarAPI patch (do NOT call directly) */
 export function _addHeaderBarButtons() {
+    if (!isHeaderBarInjectionSafe()) return [];
     return [<HeaderBarButtons key="vc-header-bar-buttons" />];
 }
 
 /** @internal Injected by HeaderBarAPI patch (do NOT call directly) */
 export function _addChannelToolbarButtons(children: any[]) {
+    if (!isHeaderBarInjectionSafe()) return;
     children.push(<ChannelToolbarButtons key="vc-channel-toolbar-buttons" />);
 }

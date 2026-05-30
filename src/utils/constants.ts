@@ -645,6 +645,22 @@ export const Devs = /* #__PURE__*/ Object.freeze({
     },
 } satisfies Record<string, Dev>);
 
+/** Subset of Equicord plugin authors (for vendored equicordplugins) */
+export const EquicordDevs = Object.freeze({
+    Wolfie: {
+        name: "wolfieeeeeeee",
+        id: 347096063569559553n,
+    },
+    nexpid: {
+        name: "Nexpid",
+        id: 853550207039832084n,
+    },
+    Etorix: {
+        name: "Etorix",
+        id: 94597845868355584n,
+    },
+} satisfies Record<string, Dev>);
+
 // iife so #__PURE__ works correctly
 export const DevsById = /* #__PURE__*/ (() =>
     Object.freeze(Object.fromEntries(

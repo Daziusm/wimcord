@@ -31,7 +31,7 @@ function targetFromPassthrough(args) {
 
 try {
     if (action) {
-        console.log(`[Wimcord] ${action} (using Vencord Installer CLI from ${WIMCORD_ROOT})`);
+        console.log(`[Wimcord] ${action} (Wimcord Installer CLI → ${WIMCORD_ROOT})`);
         if (process.platform === "win32" && ["install", "repair", "uninstall"].includes(action)) {
             const { killDiscordProcesses } = await import("./installer-lib/discordKill.mjs");
             const target = targetFromPassthrough(passthrough);

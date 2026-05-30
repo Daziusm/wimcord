@@ -19,7 +19,9 @@ import { React } from "@webpack/common";
 import { WIMCORD_BRAND } from "@wimcord-core/branding";
 import { getFeatureToggles, getWimcordConfigSync, loadWimcordConfig, saveWimcordConfig, setFeatureEnabled } from "@wimcord-core/config";
 import { getCurrentDiscordUserId, registerCurrentWimcordUser } from "@wimcord-core/badgeRegistry";
-import { fetchWimcordRelease } from "@wimcord-core/releaseUpdater";
+import { getPatchHealthReport } from "@wimcord-core/patchHealth";
+import { checkWimcordRelease, fetchWimcordRelease } from "@wimcord-core/releaseUpdater";
+import { openWimcordReleaseModal } from "../wimcordUpdater/ReleaseUpdateModal";
 import { removeFromArray } from "@utils/misc";
 
 import { markWimcordPluginStarted } from "../_shared/featureGate";
@@ -34,7 +36,13 @@ const settings = definePluginSettings({
 
 function WimcordPanelTab() {
     const [cfg, setCfg] = React.useState(getWimcordConfigSync());
+    const [logPath, setLogPath] = React.useState<string | null>(null);
     const refresh = async () => setCfg(await loadWimcordConfig());
+
+    React.useEffect(() => {
+        if (!IS_DISCORD_DESKTOP) return;
+        VencordNative.wimcord.getLogPath().then(setLogPath).catch(() => {});
+    }, []);
 
     return (
         <SettingsTab>
@@ -100,11 +108,25 @@ function WimcordPanelTab() {
             <Divider />
 
             <HeadingSecondary>Updates</HeadingSecondary>
+            <Paragraph style={{ fontSize: 12, opacity: 0.85 }}>
+                Wimcord checks GitHub Releases automatically when you start Discord (and every few hours).
+            </Paragraph>
             <Button
+                style={{ marginTop: 8 }}
                 onClick={async () => {
-                    const m = await fetchWimcordRelease();
-                    if (m) alert(`Remote version: ${m.version}\n${m.notes ?? ""}`);
-                    else alert("No update available or manifest not configured.");
+                    const newer = await checkWimcordRelease();
+                    if (newer) {
+                        openWimcordReleaseModal(newer);
+                        return;
+                    }
+                    const latest = await fetchWimcordRelease();
+                    if (latest && latest.version === WIMCORD_BRAND.version) {
+                        alert(`You're on the latest release (${WIMCORD_BRAND.version}).`);
+                    } else if (latest) {
+                        alert(`Installed: ${WIMCORD_BRAND.version}\nLatest on GitHub: ${latest.version}`);
+                    } else {
+                        alert("Could not reach GitHub. Try again later.");
+                    }
                 }}
             >
                 Check for updates
@@ -113,6 +135,50 @@ function WimcordPanelTab() {
             <Divider />
 
             <HeadingSecondary>Diagnostics</HeadingSecondary>
+            {(() => {
+                const ph = getPatchHealthReport();
+                if (!ph) return (
+                    <Paragraph style={{ fontSize: 12, opacity: 0.85 }}>
+                        Patch health: not checked yet (open Discord fully).
+                    </Paragraph>
+                );
+                return (
+                    <Paragraph style={{ fontSize: 12, opacity: 0.85 }}>
+                        Patch health: {ph.ok ? "OK" : "degraded"}
+                        {ph.safeModeActive ? " (safe mode on)" : ""}
+                        {!ph.ok && (
+                            <>
+                                <br />
+                                {ph.probableCause}
+                            </>
+                        )}
+                    </Paragraph>
+                );
+            })()}
+            <Switch
+                value={cfg.safeModeOnPatchFailure}
+                onChange={async v => {
+                    await saveWimcordConfig({ safeModeOnPatchFailure: v });
+                    await refresh();
+                }}
+                note="Off = always show title-bar buttons (CustomProfile, etc.) even if probes fail — may crash"
+            >
+                Safe mode on patch failure
+            </Switch>
+            <Paragraph style={{ fontSize: 12, opacity: 0.85 }}>
+                CustomProfile and similar plugins add a button in Discord&apos;s top title bar. If that button is missing,
+                check that the plugin is enabled under Settings → Plugins, then rebuild + repair. Safe mode only hides the bar when the injection patch truly fails.
+            </Paragraph>
+            <Switch
+                value={cfg.patchHealthNotifyOnFailure}
+                onChange={async v => {
+                    await saveWimcordConfig({ patchHealthNotifyOnFailure: v });
+                    await refresh();
+                }}
+                note="Show a warning modal when Discord is newer than this Wimcord build"
+            >
+                Warn when patches are stale
+            </Switch>
             <Switch
                 value={cfg.diagnosticsEnabled}
                 onChange={async v => {
@@ -134,15 +200,22 @@ function WimcordPanelTab() {
                 Save diagnostics to disk
             </Switch>
             {IS_DISCORD_DESKTOP && (
-                <Button
-                    style={{ marginTop: 8 }}
-                    onClick={async () => {
-                        const path = await VencordNative.wimcord.getLogPath();
-                        VencordNative.native.openExternal(path.replace(/[^/\\]+$/, ""));
-                    }}
-                >
-                    Open log folder
-                </Button>
+                <>
+                    {logPath ? (
+                        <Paragraph style={{ fontSize: 12, opacity: 0.85, wordBreak: "break-all" }}>
+                            Log file: {logPath}
+                        </Paragraph>
+                    ) : null}
+                    <Button
+                        style={{ marginTop: 8 }}
+                        onClick={async () => {
+                            const err = await VencordNative.wimcord.openLogFolder();
+                            if (err) alert(`Could not open log folder: ${err}`);
+                        }}
+                    >
+                        Open log folder
+                    </Button>
+                </>
             )}
         </SettingsTab>
     );

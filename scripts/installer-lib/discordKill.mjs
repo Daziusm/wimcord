@@ -52,10 +52,12 @@ export function forceKillDiscordSync() {
         } catch { /* not running */ }
     }
 
-    try {
-        execFileSync("taskkill", ["/F", "/IM", "VencordInstallerCli.exe"], { windowsHide: true, stdio: "ignore" });
-        log += "taskkill /F /IM VencordInstallerCli.exe\n";
-    } catch { /* none */ }
+    for (const cli of ["WimcordInstallerCli.exe", "VencordInstallerCli.exe"]) {
+        try {
+            execFileSync("taskkill", ["/F", "/IM", cli], { windowsHide: true, stdio: "ignore" });
+            log += `taskkill /F /IM ${cli}\n`;
+        } catch { /* none */ }
+    }
 
     return log;
 }

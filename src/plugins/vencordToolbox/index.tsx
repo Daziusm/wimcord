@@ -23,13 +23,26 @@ import ErrorBoundary from "@components/ErrorBoundary";
 import { Devs } from "@utils/constants";
 import { WIMCORD_BRAND } from "@wimcord-core/branding";
 import definePlugin, { OptionType } from "@utils/types";
-import { findComponentByCodeLazy } from "@webpack";
+import { isHeaderBarInjectionSafe, isNativeHeaderBarIconSafe } from "@wimcord-core/patchHealth";
+import { findComponentByCode } from "@webpack";
 import { Popout, useRef, useState } from "@webpack/common";
-import type { PropsWithChildren } from "react";
+import type { ComponentType, PropsWithChildren } from "react";
 
 import { renderPopout } from "./menu";
 
-const HeaderBarIcon = findComponentByCodeLazy(".HEADER_BAR_BADGE_BOTTOM,", 'position:"bottom"');
+let cachedToolboxIcon: ComponentType<any> | null | undefined;
+
+function resolveToolboxIcon() {
+    if (!isNativeHeaderBarIconSafe()) return null;
+    if (cachedToolboxIcon !== undefined) return cachedToolboxIcon;
+    try {
+        cachedToolboxIcon = findComponentByCode(".HEADER_BAR_BADGE_BOTTOM,", 'position:"bottom"');
+    } catch {
+        cachedToolboxIcon = null;
+    }
+    if (!cachedToolboxIcon) cachedToolboxIcon = null;
+    return cachedToolboxIcon;
+}
 
 export const settings = definePluginSettings({
     showPluginMenu: {
@@ -51,8 +64,11 @@ function Icon({ isShown }: { isShown: boolean; }) {
 }
 
 function VencordPopoutButton() {
+    const HeaderBarIcon = resolveToolboxIcon();
     const buttonRef = useRef(null);
     const [show, setShow] = useState(false);
+
+    if (!HeaderBarIcon) return null;
 
     return (
         <Popout
@@ -97,6 +113,7 @@ export default definePlugin({
     ],
 
     TrailingWrapper({ children }: PropsWithChildren) {
+        if (!isHeaderBarInjectionSafe() || !isNativeHeaderBarIconSafe()) return <>{children}</>;
         return (
             <>
                 {children}

@@ -23,6 +23,7 @@ import { pathToFileURL } from "url";
 import { initCsp } from "./csp";
 import { initWimcordMainDiagnostics } from "./wimcordDiagnostics";
 import { initWimcordInstallerIpc } from "./wimcordInstallerIpc";
+import { initWimcordUpdateIpc } from "./wimcordUpdateIpc";
 import { ensureSafePath } from "./ipcMain";
 import { RendererSettings } from "./settings";
 import { IS_VANILLA, THEMES_DIR } from "./utils/constants";
@@ -30,6 +31,7 @@ import { installExt } from "./utils/extensions";
 
 initWimcordMainDiagnostics();
 initWimcordInstallerIpc();
+initWimcordUpdateIpc();
 
 if (IS_VESKTOP || !IS_VANILLA) {
     app.whenReady().then(() => {

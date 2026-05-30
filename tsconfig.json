@@ -31,6 +31,7 @@
             "@wimcord-core": ["./src/wimcord-core/index"],
             "@wimcord-patches/*": ["./src/wimcord-patches/*"],
             "@wimcord-plugins/*": ["./src/wimcord-plugins/*"],
+            "@equicordplugins/*": ["./src/equicordplugins/*"],
             "@shared/*": ["./src/shared/*"],
             "@webpack/common": ["./src/webpack/common"],
             "@webpack/common/*": ["./src/webpack/common/*"],

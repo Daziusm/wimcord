@@ -15,6 +15,8 @@ import {
     userHasRemoteBadge,
     WIMCORD_USER_BADGE,
 } from "./badgeRegistry";
+import { WimcordBadgeImage } from "./badgeImage";
+import { resolveBadgeIconUrl } from "./badgeIconUrl";
 import { createWimcordLogger } from "./logger";
 import type { WimcordBadgeDefinition } from "./types";
 
@@ -64,10 +66,13 @@ function toProfileBadge(def: WimcordBadgeDefinition): ProfileBadge {
     const remote = getRemoteBadgeDefinition(def.id);
     const merged = remote ? { ...def, ...remote, userIds: def.userIds } : def;
 
+    const iconSrc = resolveBadgeIconUrl(merged.iconSrc);
+
     return {
         id: `wimcord_${merged.id}`,
         description: merged.description,
-        iconSrc: merged.iconSrc,
+        iconSrc,
+        component: ErrorBoundary.wrap(WimcordBadgeImage, { noop: true }),
         link: merged.link,
         position: merged.position ?? BadgePosition.END,
         props: {

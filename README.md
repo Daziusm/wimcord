@@ -12,7 +12,7 @@ Wimcord is a desktop client mod with a focused first-party layer on top of the f
 
 ## Install (Windows)
 
-**WimcordInstaller.exe** = official Vencord installer, renamed. Quit Discord from the tray first.
+**WimcordInstaller.exe** = branded Vencord installer GUI (same patch logic, Wimcord UI). Quit Discord from the tray first.
 
 ```bash
 pnpm install
@@ -20,9 +20,9 @@ pnpm run build
 pnpm run wimcord:installer
 ```
 
-**Offline folder:** `pnpm run wimcord:installer:package` → run `Install Wimcord.bat`.
+**Offline folder:** `pnpm run wimcord:installer:package` → zip `release/wimcord-installer-<version>/` and run **`WimcordInstaller.exe`**.
 
-**CLI:** `pnpm run wimcord:installer:cli`
+**CLI:** `pnpm run inject` / `pnpm run repair` / `pnpm run uninject`
 
 ---
 
@@ -36,7 +36,7 @@ pnpm run wimcord:installer
 | **UI tweak pack** | Minimal polish plugins, gated off until you enable them. |
 | **Crash diagnostics** | Optional local logs and heartbeats to debug restarts — nothing uploaded unless you share files yourself. |
 | **Wimcord badges** | Optional registry; only your **Discord user id** is sent if you opt in — never your token. |
-| **Installer** | Official Vencord installer (`WimcordInstaller.exe`), pointed at your Wimcord build. |
+| **Installer** | Branded Vencord installer (`WimcordInstaller.exe` + `WimcordInstallerCli.exe`), pointed at your Wimcord build. |
 
 ---
 
@@ -67,7 +67,7 @@ pnpm run build
 pnpm run inject
 ```
 
-Output: `release/wimcord-installer-<version>/` — run `Install Wimcord.bat`
+Output: `release/wimcord-installer-<version>/` — double-click `WimcordInstaller.exe`
 
 ---
 

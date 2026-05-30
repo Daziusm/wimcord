@@ -92,10 +92,16 @@ export default {
         appendDiagnostic: (line: string) => invoke<boolean>(IpcEvents.WIMCORD_APPEND_DIAGNOSTIC, line),
         readDiagnostics: () => invoke<string[]>(IpcEvents.WIMCORD_READ_DIAGNOSTICS),
         getLogPath: () => invoke<string>(IpcEvents.WIMCORD_GET_LOG_PATH),
+        openLogFolder: () => invoke<string>(IpcEvents.WIMCORD_OPEN_LOG_FOLDER),
         runInstaller: (action: "install" | "uninstall" | "repair") =>
             invoke<{ ok: boolean; stdout?: string; stderr?: string; error?: string; }>(
                 IpcEvents.WIMCORD_RUN_INSTALLER,
                 action
+            ),
+        applyDistUpdate: (downloadUrl: string) =>
+            invoke<{ ok: boolean; files?: number; error?: string; }>(
+                IpcEvents.WIMCORD_APPLY_DIST_UPDATE,
+                downloadUrl
             ),
     },
 

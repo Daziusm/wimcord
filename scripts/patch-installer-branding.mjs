@@ -4,6 +4,9 @@
 
 /** @type {[string, string][]} */
 export const INSTALLER_STRING_PATCHES = [
+    ["VencordInstaller.exe", "WimcordInstaller.exe"],
+    ["VencordInstallerCli.exe", "WimcordInstallerCli.exe"],
+    ["VencordInstaller", "WimcordInstaller"],
     ["Vencord Installer", "Wimcord Installer"],
     ["Local Vencord Version", "Local Wimcord Version"],
     ["Latest Vencord Version", "Latest Wimcord Version"],

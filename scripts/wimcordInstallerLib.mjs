@@ -8,7 +8,10 @@ import { Readable } from "stream";
 import { finished } from "stream/promises";
 import { fileURLToPath, pathToFileURL } from "url";
 
+import { installerNeedsBrandingPatch, patchInstallerBranding } from "./patch-installer-branding.mjs";
+
 const BASE_URL = "https://github.com/Vencord/Installer/releases/latest/download/";
+const WIMCORD_WIN_CLI = "WimcordInstallerCli.exe";
 const INSTALLER_PATH_DARWIN = "VencordInstaller.app/Contents/MacOS/VencordInstaller";
 
 const LIB_DIR = dirname(fileURLToPath(import.meta.url));
@@ -42,7 +45,8 @@ async function fetchWithTimeout(url, options = {}, ms = 30_000) {
     }
 }
 
-export function getInstallerFilename() {
+/** Upstream asset name on github.com/Vencord/Installer */
+export function getUpstreamInstallerFilename() {
     switch (process.platform) {
         case "win32":
             return "VencordInstallerCli.exe";
@@ -55,19 +59,32 @@ export function getInstallerFilename() {
     }
 }
 
+/** Local binary name (Windows CLI is rebranded) */
+export function getInstallerFilename() {
+    if (process.platform === "win32") return WIMCORD_WIN_CLI;
+    return getUpstreamInstallerFilename();
+}
+
+function writeBrandedWindowsCli(raw, dest) {
+    const { buf, hits } = patchInstallerBranding(raw);
+    if (hits === 0) console.warn("[Wimcord] CLI installer: no branding strings patched.");
+    writeFileSync(dest, buf, { mode: 0o755 });
+}
+
 export async function ensureInstallerBinary(onStatus) {
-    const filename = getInstallerFilename();
+    const upstream = getUpstreamInstallerFilename();
+    const localName = getInstallerFilename();
     mkdirSync(FILE_DIR, { recursive: true });
 
     const outputFile = process.platform === "darwin"
         ? join(FILE_DIR, "VencordInstaller")
-        : join(FILE_DIR, filename);
+        : join(FILE_DIR, localName);
 
-    if (existsSync(outputFile)) {
+    if (existsSync(outputFile) && (process.platform !== "win32" || !installerNeedsBrandingPatch(readFileSync(outputFile)))) {
         onStatus?.("Checking for installer updates…");
         try {
             const etag = existsSync(ETAG_FILE) ? readFileSync(ETAG_FILE, "utf-8") : null;
-            const res = await fetchWithTimeout(BASE_URL + filename, {
+            const res = await fetchWithTimeout(BASE_URL + upstream, {
                 headers: {
                     "User-Agent": "Wimcord",
                     "If-None-Match": etag ?? "",
@@ -83,8 +100,8 @@ export async function ensureInstallerBinary(onStatus) {
         }
     }
 
-    onStatus?.("Downloading Vencord Installer CLI…");
-    const res = await fetchWithTimeout(BASE_URL + filename, {
+    onStatus?.("Downloading Wimcord Installer CLI…");
+    const res = await fetchWithTimeout(BASE_URL + upstream, {
         headers: { "User-Agent": "Wimcord" },
     }, 120_000);
 
@@ -101,12 +118,15 @@ export async function ensureInstallerBinary(onStatus) {
             filter: f => f.name === INSTALLER_PATH_DARWIN,
         })[INSTALLER_PATH_DARWIN];
         writeFileSync(outputFile, bytes, { mode: 0o755 });
+    } else if (process.platform === "win32") {
+        const raw = Buffer.from(await res.arrayBuffer());
+        writeBrandedWindowsCli(raw, outputFile);
     } else {
         const body = Readable.fromWeb(res.body);
         await finished(body.pipe(createWriteStream(outputFile, { mode: 0o755, autoClose: true })));
     }
 
-    onStatus?.("Installer downloaded.");
+    onStatus?.("Installer ready.");
     return outputFile;
 }
 

@@ -17,6 +17,7 @@
 */
 
 import ErrorBoundary from "@components/ErrorBoundary";
+import { isPluginEnabled } from "@api/PluginManager";
 import BadgeAPIPlugin from "@plugins/_api/badges";
 import { getWimcordConfigSync } from "@wimcord-core/config";
 import { getWimcordProfileBadges } from "@wimcord-core/badges";
@@ -115,6 +116,22 @@ export function _getBadges(args: BadgeUserArgs) {
                 ...donorBadges.map(badge => ({
                     ...args,
                     ...badge,
+                }))
+            );
+        }
+    }
+
+    if (isPluginEnabled("GlobalBadges")) {
+        const globalPlugin = Vencord.Plugins.plugins.GlobalBadges as {
+            getGlobalBadges?: (userId: string) => ProfileBadge[];
+        } | undefined;
+        const globalBadges = globalPlugin?.getGlobalBadges?.(args.userId);
+        if (globalBadges?.length) {
+            badges.push(
+                ...globalBadges.map(badge => ({
+                    ...args,
+                    ...badge,
+                    component: badge.component && ErrorBoundary.wrap(badge.component, { noop: true }),
                 }))
             );
         }

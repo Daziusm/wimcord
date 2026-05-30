@@ -32,7 +32,9 @@ export * from "./pluginSync";
 export * from "./badges";
 export * from "./badgeRegistry";
 export * from "./diagnostics";
+export * from "./patchHealth";
 export * from "./releaseUpdater";
+export * from "./testedBuild";
 
 const log = createWimcordLogger("Core");
 

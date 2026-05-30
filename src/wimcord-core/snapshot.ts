@@ -6,6 +6,7 @@
 import { getBuildNumber } from "@webpack/patcher";
 
 import { checkCompatibility } from "./compat";
+import { getPatchHealthSummaryForSnapshot } from "./patchHealth";
 import { getDiagnosticSessionId } from "./diagnosticsSession";
 import { getRuntimeState } from "./runtime";
 import { WIMCORD_BRAND } from "./branding";
@@ -47,6 +48,7 @@ export function captureRendererSnapshot(extra?: Record<string, unknown>) {
                 jsHeapSizeLimit: perf.memory.jsHeapSizeLimit,
             }
             : undefined,
+        patchHealth: getPatchHealthSummaryForSnapshot(),
         ...extra,
     };
 }

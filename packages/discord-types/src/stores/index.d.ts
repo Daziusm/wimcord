@@ -31,6 +31,7 @@ export * from "./OverridePremiumTypeStore";
 export * from "./PendingReplyStore";
 export * from "./PermissionStore";
 export * from "./PopoutWindowStore";
+export * from "./QuestStore";
 export * from "./PresenceStore";
 export * from "./ReadStateStore";
 export * from "./RelationshipStore";

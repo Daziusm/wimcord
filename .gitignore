@@ -23,7 +23,9 @@ skills-lock.json
 
 # Editor & assistant config (not part of the mod)
 .gemini/
-.github/
+.github/*
+!.github/workflows/
+!.github/workflows/**
 .vscode/
 
 # Local settings (user-specific)

@@ -59,5 +59,7 @@ export const enum IpcEvents {
   WIMCORD_APPEND_DIAGNOSTIC = "WimcordAppendDiagnostic",
   WIMCORD_READ_DIAGNOSTICS = "WimcordReadDiagnostics",
   WIMCORD_GET_LOG_PATH = "WimcordGetLogPath",
+  WIMCORD_OPEN_LOG_FOLDER = "WimcordOpenLogFolder",
   WIMCORD_RUN_INSTALLER = "WimcordRunInstaller",
+  WIMCORD_APPLY_DIST_UPDATE = "WimcordApplyDistUpdate",
 }

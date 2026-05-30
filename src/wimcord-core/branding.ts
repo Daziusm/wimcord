@@ -7,7 +7,7 @@ export const WIMCORD_BRAND = {
     name: "Wimcord",
     shortName: "Wimcord",
     tagline: "Stable, customizable Discord — built on Vencord",
-    version: "0.1.3",
+    version: "0.1.5",
 
     /** User Settings sidebar section */
     settingsSectionTitle: "Wimcord",
@@ -29,6 +29,15 @@ export const WIMCORD_BRAND = {
     versionPrefix: "Wimcord",
     /** Internal API object name (plugins use Vencord.* — do not rename) */
     engineName: "Vencord",
+
+    /** GitHub repo for release checks (owner/name) */
+    githubRepo: "Daziusm/wimcord",
+} as const;
+
+export const WIMCORD_GITHUB = {
+    repo: WIMCORD_BRAND.githubRepo,
+    releasesLatestApi: `https://api.github.com/repos/${WIMCORD_BRAND.githubRepo}/releases/latest`,
+    releasesPage: `https://github.com/${WIMCORD_BRAND.githubRepo}/releases/latest`,
 } as const;
 
 /** User-visible labels derived from brand */

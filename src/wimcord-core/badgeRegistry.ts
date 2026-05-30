@@ -9,6 +9,7 @@ import { onceReady } from "@webpack";
 import { FluxDispatcher, UserStore } from "@webpack/common";
 
 import { WIMCORD_BRAND } from "./branding";
+import { resolveBadgeIconUrl } from "./badgeIconUrl";
 import type { WimcordBadgeDefinition } from "./types";
 import { getWimcordConfigSync, loadWimcordConfig } from "./config";
 import { createWimcordLogger } from "./logger";
@@ -53,7 +54,12 @@ function applyManifest(manifest: BadgeRegistryManifest) {
 
     for (const def of manifest.badges) {
         if (!def.id) continue;
-        remoteMeta.set(def.id, { ...WIMCORD_USER_BADGE, ...def, userIds: undefined });
+        remoteMeta.set(def.id, {
+            ...WIMCORD_USER_BADGE,
+            ...def,
+            iconSrc: resolveBadgeIconUrl(def.iconSrc ?? WIMCORD_USER_BADGE.iconSrc),
+            userIds: undefined,
+        });
         const set = remoteGrants.get(def.id) ?? new Set<string>();
         for (const id of def.userIds ?? []) set.add(id);
         remoteGrants.set(def.id, set);
@@ -72,7 +78,7 @@ function applyVencordStyle(data: VencordStyleRegistry) {
             remoteMeta.set("user", {
                 ...WIMCORD_USER_BADGE,
                 description: first.tooltip ?? WIMCORD_USER_BADGE.description,
-                iconSrc: first.badge ?? WIMCORD_USER_BADGE.iconSrc,
+                iconSrc: resolveBadgeIconUrl(first.badge ?? WIMCORD_USER_BADGE.iconSrc),
                 link: first.link,
             });
         }
@@ -165,7 +171,13 @@ export async function registerCurrentWimcordUser(): Promise<boolean> {
             }),
         });
 
-        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+        if (!res.ok) {
+            if (res.status === 400) {
+                log.debug(`Badge registration rejected (${res.status}) — registry may not accept this account yet`);
+                return false;
+            }
+            throw new Error(`${res.status} ${res.statusText}`);
+        }
 
         await set(REGISTER_STATE_KEY, {
             userId: user.id,

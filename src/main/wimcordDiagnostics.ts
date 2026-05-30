@@ -4,7 +4,7 @@
  */
 
 import { IpcEvents } from "@shared/IpcEvents";
-import { app, ipcMain } from "electron";
+import { app, ipcMain, shell } from "electron";
 import { appendFileSync, existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "fs";
 import { join } from "path";
 
@@ -70,6 +70,89 @@ function writeLine(line: string) {
     );
 }
 
+interface ParsedLogLine {
+    ts?: number;
+    kind?: string;
+    level?: string;
+    message?: string;
+    detail?: Record<string, unknown>;
+}
+
+function parseLogLines(maxLines = 250): ParsedLogLine[] {
+    try {
+        if (!existsSync(LOG_FILE)) return [];
+        const lines = readFileSync(LOG_FILE, "utf-8").split("\n").filter(Boolean).slice(-maxLines);
+        const out: ParsedLogLine[] = [];
+        for (const line of lines) {
+            try {
+                out.push(JSON.parse(line) as ParsedLogLine);
+            } catch { /* skip */ }
+        }
+        return out;
+    } catch {
+        return [];
+    }
+}
+
+function inferCrashCause(events: ParsedLogLine[]): string {
+    const patchHealth = [...events].reverse().find(e => e.kind === "patch-health");
+    const patchDetail = patchHealth?.detail as { ok?: boolean; probableCause?: string; criticalFailures?: { label: string; }[]; } | undefined;
+
+    if (patchDetail?.safeModeActive && patchDetail.probableCause) {
+        return String(patchDetail.probableCause);
+    }
+    if (patchDetail?.ok === false && patchDetail.probableCause) {
+        return String(patchDetail.probableCause);
+    }
+
+    const webpack = events.filter(e => e.kind === "webpack-module-not-found");
+    if (webpack.length >= 2) {
+        const recent = webpack.slice(-5).map(e => {
+            const d = e.detail as { method?: string; filter?: unknown[]; } | undefined;
+            return d?.method ? `${d.method}(${JSON.stringify(d.filter).slice(0, 80)})` : e.message;
+        });
+        return `Webpack modules missing before crash (${webpack.length} events). Recent: ${recent.join(" → ")}`;
+    }
+
+    const uncaught = [...events].reverse().find(e => e.kind === "uncaught-error");
+    if (uncaught?.message) {
+        return `Uncaught renderer error before crash: ${uncaught.message}`;
+    }
+
+    const rejection = [...events].reverse().find(e => e.kind === "unhandled-rejection");
+    if (rejection?.message) {
+        return `Unhandled promise rejection before crash: ${rejection.message}`;
+    }
+
+    if (patchDetail?.probableCause) return patchDetail.probableCause;
+
+    return "No webpack/patch-health signal in recent logs — may be a native renderer, GPU, or Discord bug (not a logged JS error).";
+}
+
+function buildCrashContext(): Record<string, unknown> {
+    const events = parseLogLines(300);
+    const webpack = events.filter(e => e.kind === "webpack-module-not-found").slice(-20);
+    const patchHealth = [...events].reverse().find(e => e.kind === "patch-health");
+    const errors = events.filter(e =>
+        e.kind === "uncaught-error" ||
+        e.kind === "unhandled-rejection" ||
+        e.level === "critical" ||
+        e.level === "error"
+    ).slice(-10);
+
+    return {
+        probableCause: inferCrashCause(events),
+        lastPatchHealth: patchHealth?.detail ?? patchHealth?.message,
+        recentWebpackFailures: webpack.map(e => e.detail ?? e.message),
+        recentErrors: errors.map(e => ({
+            ts: e.ts,
+            kind: e.kind,
+            message: e.message,
+            detail: e.detail,
+        })),
+    };
+}
+
 function captureMainSnapshot(extra?: Record<string, unknown>) {
     return {
         pid: process.pid,
@@ -104,6 +187,7 @@ export function initWimcordMainDiagnostics() {
     });
 
     app.on("render-process-gone", (_e, webContents, details) => {
+        const crashContext = buildCrashContext();
         appendRecord({
             kind: "render-process-gone",
             level: "critical",
@@ -111,13 +195,21 @@ export function initWimcordMainDiagnostics() {
             detail: {
                 ...captureMainSnapshot(),
                 exitCode: details.exitCode,
+                exitCodeHex: details.exitCode != null ? `0x${(details.exitCode >>> 0).toString(16).toUpperCase()}` : undefined,
                 reason: details.reason,
                 url: webContents.getURL(),
                 title: webContents.getTitle?.(),
                 osProcessId: webContents.getOSProcessId?.(),
+                ...crashContext,
             },
         });
-        console.error("[Wimcord] render-process-gone", details);
+        appendRecord({
+            kind: "crash-summary",
+            level: "critical",
+            message: String(crashContext.probableCause ?? "Renderer crash — see render-process-gone entry"),
+            detail: crashContext,
+        });
+        console.error("[Wimcord] render-process-gone", details, crashContext.probableCause);
     });
 
     app.on("child-process-gone", (_e, details) => {
@@ -279,4 +371,5 @@ export function initWimcordMainDiagnostics() {
     });
 
     ipcMain.handle(IpcEvents.WIMCORD_GET_LOG_PATH, () => LOG_FILE);
+    ipcMain.handle(IpcEvents.WIMCORD_OPEN_LOG_FOLDER, () => shell.openPath(LOG_DIR));
 }

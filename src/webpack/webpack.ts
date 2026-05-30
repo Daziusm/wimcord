@@ -213,9 +213,25 @@ if (IS_DEV && IS_DISCORD_DESKTOP) {
     }, 0);
 }
 
+const moduleNotFoundListeners = new Set<(method: string, filter: unknown[]) => void>();
+
+/** Wimcord / tooling: record webpack misses without patching handleModuleNotFound */
+export function onWebpackModuleNotFound(listener: (method: string, filter: unknown[]) => void) {
+    moduleNotFoundListeners.add(listener);
+    return () => { moduleNotFoundListeners.delete(listener); };
+}
+
 export function handleModuleNotFound(method: string, ...filter: unknown[]) {
     const err = new Error(`webpack.${method} found no module`);
     logger.error(err, "Filter:", filter);
+
+    for (const listener of moduleNotFoundListeners) {
+        try {
+            listener(method, filter);
+        } catch (e) {
+            logger.error("moduleNotFound listener failed", e);
+        }
+    }
 
     // Strict behaviour in DevBuilds to fail early and make sure the issue is found
     if (IS_DEV && !devToolsOpen)
