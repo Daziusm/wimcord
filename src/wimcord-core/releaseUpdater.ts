@@ -120,6 +120,7 @@ export async function fetchWimcordRelease(): Promise<WimcordReleaseManifest | nu
 
 /** Returns manifest only when a newer release exists and user has not dismissed it. */
 export async function checkWimcordRelease(): Promise<WimcordReleaseManifest | null> {
+    await loadWimcordConfig();
     if (!getWimcordConfigSync().updateNotificationsEnabled) return null;
 
     const manifest = await fetchWimcordRelease();

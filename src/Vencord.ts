@@ -39,7 +39,9 @@ import { SettingsRouter } from "@webpack/common";
 
 import { get as dsGet } from "./api/DataStore";
 import { NotificationData, showNotification } from "./api/Notifications";
-import { WIMCORD_UI } from "@wimcord-core/branding";
+import { WIMCORD_BRAND, WIMCORD_UI } from "@wimcord-core/branding";
+import { checkWimcordRelease } from "@wimcord-core/releaseUpdater";
+import { openWimcordReleaseModal } from "./wimcord-plugins/wimcordUpdater/ReleaseUpdateModal";
 import { initWimcordCore, hookWimcordLifecycle } from "./wimcord-core";
 import { gateBeforeWebpackPlugins, schedulePatchHealthRechecks } from "@wimcord-core/patchHealth";
 
@@ -122,6 +124,16 @@ async function runUpdateCheck() {
     };
 
     try {
+        const release = await checkWimcordRelease();
+        if (release) {
+            notify({
+                title: `${WIMCORD_BRAND.name} ${release.version} is available`,
+                body: release.notes?.slice(0, 100) ?? "Click to download or install the update.",
+                onClick: () => openWimcordReleaseModal(release),
+            });
+            return;
+        }
+
         const isOutdated = await checkForUpdates();
         if (!isOutdated) return;
 

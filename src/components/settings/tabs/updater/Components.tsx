@@ -11,10 +11,27 @@ import { Link } from "@components/Link";
 import { Margins } from "@utils/margins";
 import { classes } from "@utils/misc";
 import { relaunch } from "@utils/native";
+import { WIMCORD_BRAND } from "@wimcord-core/branding";
+import { checkWimcordRelease, fetchWimcordRelease } from "@wimcord-core/releaseUpdater";
+import { openWimcordReleaseModal } from "@wimcord-plugins/wimcordUpdater/ReleaseUpdateModal";
 import { changes, checkForUpdates, update, updateError } from "@utils/updater";
-import { Button, ConfirmModal,Forms, openModal, React, Toasts, useState } from "@webpack/common";
+import { Button, ConfirmModal, Forms, openModal, React, Toasts, useEffect, useState } from "@webpack/common";
 
 import { runWithDispatch } from "./runWithDispatch";
+
+async function checkGitHubReleaseFirst(): Promise<boolean> {
+    const newer = await checkWimcordRelease();
+    if (newer) {
+        openWimcordReleaseModal(newer);
+        Toasts.show({
+            message: `${WIMCORD_BRAND.name} ${newer.version} is available — see the update window.`,
+            id: Toasts.genId(),
+            type: Toasts.Type.MESSAGE,
+        });
+        return true;
+    }
+    return false;
+}
 
 export interface CommonProps {
     repo: string;
@@ -63,6 +80,48 @@ export function Newer(props: CommonProps) {
                 Your local copy has more recent commits. Please stash or reset them.
             </Forms.FormText>
             <Changes {...props} updates={changes} />
+        </>
+    );
+}
+
+export function WimcordGitHubReleaseSection() {
+    const [label, setLabel] = useState(`Installed release: ${WIMCORD_BRAND.version}`);
+    const [checking, setChecking] = useState(false);
+
+    const runReleaseCheck = async () => {
+        setChecking(true);
+        try {
+            if (await checkGitHubReleaseFirst()) {
+                setLabel(`Update available: ${WIMCORD_BRAND.name} newer than ${WIMCORD_BRAND.version}`);
+                return;
+            }
+            const latest = await fetchWimcordRelease();
+            if (!latest?.version) {
+                setLabel("Could not reach GitHub Releases. Try again later.");
+                return;
+            }
+            if (latest.version === WIMCORD_BRAND.version) {
+                setLabel(`Up to date on release ${WIMCORD_BRAND.version}`);
+            } else {
+                setLabel(`Installed ${WIMCORD_BRAND.version} — latest on GitHub is ${latest.version}`);
+            }
+        } finally {
+            setChecking(false);
+        }
+    };
+
+    useEffect(() => {
+        void runReleaseCheck();
+    }, []);
+
+    return (
+        <>
+            <Forms.FormText className={Margins.bottom8}>
+                {label}
+            </Forms.FormText>
+            <Button disabled={checking} onClick={() => void runReleaseCheck()}>
+                Check GitHub release
+            </Button>
         </>
     );
 }
@@ -125,6 +184,10 @@ export function Updatable(props: CommonProps) {
                 <Button
                     disabled={isUpdating || isChecking}
                     onClick={runWithDispatch(setIsChecking, async () => {
+                        if (await checkGitHubReleaseFirst()) {
+                            return;
+                        }
+
                         const outdated = await checkForUpdates();
 
                         if (outdated) {
@@ -133,7 +196,7 @@ export function Updatable(props: CommonProps) {
                             setUpdates([]);
 
                             Toasts.show({
-                                message: "No updates found!",
+                                message: "No git updates found. Checked GitHub release too.",
                                 id: Toasts.genId(),
                                 type: Toasts.Type.MESSAGE,
                                 options: {

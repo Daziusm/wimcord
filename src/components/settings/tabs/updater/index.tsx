@@ -36,7 +36,7 @@ import { WIMCORD_BRAND, WIMCORD_UI } from "@wimcord-core/branding";
 
 import gitHash from "~git-hash";
 
-import { CommonProps, HashLink, Newer, Updatable } from "./Components";
+import { CommonProps, HashLink, Newer, Updatable, WimcordGitHubReleaseSection } from "./Components";
 
 function VesktopSection() {
     if (!IS_VESKTOP) return null;
@@ -116,7 +116,15 @@ function Updater() {
 
             <Divider className={classes(Margins.top16, Margins.bottom16)} />
 
-            <Forms.FormTitle tag="h5">Updates</Forms.FormTitle>
+            <Forms.FormTitle tag="h5">GitHub release</Forms.FormTitle>
+            <Forms.FormText className={Margins.bottom8}>
+                Downloadable versions (installer zip). This is what most users should follow — not the git commit below.
+            </Forms.FormText>
+            <WimcordGitHubReleaseSection />
+
+            <Divider className={classes(Margins.top16, Margins.bottom16)} />
+
+            <Forms.FormTitle tag="h5">Git updates (developers)</Forms.FormTitle>
 
             {isNewer
                 ? <Newer {...commonProps} />
