@@ -74,7 +74,8 @@ function ReleaseUpdateModal({
         appendLog("Downloading update…\n");
         const res = await VencordNative.wimcord.applyDistUpdate(manifest.downloadUrl);
         if (res.ok) {
-            appendLog(`Installed ${res.files ?? 0} file(s). Restart Discord to load ${manifest.version}.\n`);
+            const where = res.paths?.length ? `\nUpdated:\n${res.paths.join("\n")}\n` : "";
+            appendLog(`Installed ${res.files ?? 0} file(s).${where}Restart Discord fully (quit from tray) to load ${manifest.version}.\n`);
             recordDiagnostic("update", `Applied dist update ${manifest.version}`, { level: "info" });
         } else {
             appendLog(`Failed: ${res.error ?? "unknown error"}\n`);

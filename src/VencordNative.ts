@@ -99,7 +99,7 @@ export default {
                 action
             ),
         applyDistUpdate: (downloadUrl: string) =>
-            invoke<{ ok: boolean; files?: number; error?: string; }>(
+            invoke<{ ok: boolean; files?: number; paths?: string[]; error?: string; }>(
                 IpcEvents.WIMCORD_APPLY_DIST_UPDATE,
                 downloadUrl
             ),

@@ -5,8 +5,8 @@
 
 import { IpcEvents } from "@shared/IpcEvents";
 import { unzipSync } from "fflate";
+import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from "fs";
 import { ipcMain } from "electron";
-import { mkdirSync, renameSync, rmSync, writeFileSync } from "fs";
 import { dirname, join } from "path";
 
 import { DATA_DIR } from "./utils/constants";
@@ -16,6 +16,31 @@ function stripZipRoot(path: string): string {
     if (parts[0] === "dist") parts.shift();
     if (parts[0]?.toLowerCase().startsWith("wimcord-dist")) parts.shift();
     return parts.join("/");
+}
+
+/** Dist folder Discord is executing from (main/preload/patcher bundles). */
+function getLiveDistDir(): string {
+    return __dirname;
+}
+
+/** Legacy/data path — wrong for dev installs if env is not set in the Electron process. */
+function getDataDistDir(): string {
+    return join(DATA_DIR, "dist");
+}
+
+function resolveDistTargets(): string[] {
+    const live = getLiveDistDir();
+    const targets = [live];
+
+    const dataDist = getDataDistDir();
+    const normalizedLive = live.replace(/\\/g, "/").toLowerCase();
+    const normalizedData = dataDist.replace(/\\/g, "/").toLowerCase();
+
+    if (normalizedData !== normalizedLive && existsSync(join(dataDist, "patcher.js"))) {
+        targets.push(dataDist);
+    }
+
+    return targets;
 }
 
 export function initWimcordUpdateIpc() {
@@ -34,8 +59,7 @@ export function initWimcordUpdateIpc() {
 
             const buf = Buffer.from(await res.arrayBuffer());
             const files = unzipSync(new Uint8Array(buf));
-            const distDir = join(DATA_DIR, "dist");
-            const tmpDir = join(DATA_DIR, "dist-update-staging");
+            const tmpDir = join(dirname(getLiveDistDir()), "dist-update-staging");
 
             rmSync(tmpDir, { recursive: true, force: true });
             mkdirSync(tmpDir, { recursive: true });
@@ -55,10 +79,17 @@ export function initWimcordUpdateIpc() {
                 return { ok: false as const, error: "Zip contained no files" };
             }
 
-            rmSync(distDir, { recursive: true, force: true });
-            renameSync(tmpDir, distDir);
+            const updatedPaths: string[] = [];
+            for (const distDir of resolveDistTargets()) {
+                mkdirSync(distDir, { recursive: true });
+                // Overwrite in place — do not delete the running dist folder while Discord is open
+                cpSync(tmpDir, distDir, { recursive: true, force: true });
+                updatedPaths.push(distDir);
+            }
 
-            return { ok: true as const, files: count };
+            rmSync(tmpDir, { recursive: true, force: true });
+
+            return { ok: true as const, files: count, paths: updatedPaths };
         } catch (e: any) {
             return { ok: false as const, error: e?.message ?? String(e) };
         }
