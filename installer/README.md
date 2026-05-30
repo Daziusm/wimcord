@@ -19,20 +19,11 @@ pnpm run repair
 pnpm run uninject
 ```
 
-## End users (release zip)
+## End users (GitHub release)
 
-1. Extract `wimcord-installer-<version>/` anywhere.
-2. Double-click **`WimcordInstaller.exe`** at the top level (not a `.bat`).
-3. Click **Install** in the window, then restart Discord.
+1. Download **`WimcordInstaller-<version>.exe`** (one file — no zip).
+2. Double-click it, click **Install** in the window, restart Discord.
 
-Layout:
+The exe unpacks Wimcord to `%LocalAppData%\Wimcord` on first run (you don’t manage folders yourself).
 
-```
-wimcord-installer-0.1.5/
-  WimcordInstaller.exe       ← launcher you run
-  lib/WimcordInstaller.Gui.exe
-  wimcord/dist/              ← mod files
-  README.txt
-```
-
-Your install data stays in the `wimcord/` folder next to the installer.
+**Why not literally only an exe with zero hidden files?** Discord loads the mod from real files on disk (`dist/patcher.js`, etc.). The single exe embeds those files and extracts them once — same idea as other game installers.

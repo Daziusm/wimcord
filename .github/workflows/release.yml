@@ -30,12 +30,6 @@ jobs:
       - name: Create dist zip for in-app updater
         run: pnpm wimcord:package:dist-zip
 
-      - name: Zip portable installer folder
-        shell: pwsh
-        run: |
-          $v = (Get-Content package.json -Raw | ConvertFrom-Json).version
-          Compress-Archive -Path "release/wimcord-installer-$v" -DestinationPath "release/wimcord-installer-$v.zip" -Force
-
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
         with:
@@ -43,6 +37,6 @@ jobs:
           generate_release_notes: true
           files: |
             release/wimcord-dist-*.zip
-            release/wimcord-installer-*.zip
+            release/WimcordInstaller-*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

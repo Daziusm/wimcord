@@ -14,6 +14,8 @@ const version = JSON.parse(readFileSync(join(root, "package.json"), "utf8")).ver
 const outDir = join(root, "release", `wimcord-installer-${version}`);
 const bundleRoot = join(outDir, "wimcord");
 const libDir = join(outDir, "lib");
+const releaseDir = join(root, "release");
+const singleExe = join(releaseDir, `WimcordInstaller-${version}.exe`);
 const INSTALLER_URL =
     "https://github.com/Vencord/Installer/releases/download/v1.4.0/VencordInstaller.exe";
 
@@ -29,23 +31,6 @@ async function downloadInstaller(dest) {
     writeFileSync(dest, buf);
 }
 
-function writeReadme() {
-    writeFileSync(
-        join(outDir, "README.txt"),
-        `Wimcord ${version} — Windows installer package
-
-1. Extract this entire folder anywhere (e.g. Desktop\\Wimcord).
-2. Double-click WimcordInstaller.exe
-3. Click Install in the window, then restart Discord.
-
-Your Wimcord files live in the "wimcord" subfolder next to the installer.
-Do not delete that folder after installing.
-
-https://github.com/Daziusm/wimcord
-`.replace(/\n/g, "\r\n")
-    );
-}
-
 console.log("[Wimcord] Building client…");
 runPnpm(["run", "build"], { cwd: root });
 
@@ -57,21 +42,49 @@ if (!existsSync(join(root, "dist", "patcher.js"))) {
 mkdirSync(outDir, { recursive: true });
 mkdirSync(bundleRoot, { recursive: true });
 mkdirSync(libDir, { recursive: true });
+mkdirSync(releaseDir, { recursive: true });
 cpSync(join(root, "dist"), join(bundleRoot, "dist"), { recursive: true });
 
 const guiDest = join(libDir, "WimcordInstaller.Gui.exe");
 console.log("[Wimcord] Downloading & branding GUI installer…");
 await downloadInstaller(guiDest);
 
-const launcherDest = join(outDir, "WimcordInstaller.exe");
-console.log("[Wimcord] Building WimcordInstaller.exe launcher…");
+const launcherStub = join(outDir, ".launcher-stub.exe");
+console.log("[Wimcord] Building launcher stub…");
 execFileSync(
     process.execPath,
-    [join(root, "scripts", "build-wimcord-installer-launcher.mjs"), launcherDest],
+    [join(root, "scripts", "build-wimcord-installer-launcher.mjs"), launcherStub],
     { stdio: "inherit", cwd: root }
 );
 
-writeReadme();
+console.log("[Wimcord] Building single-file WimcordInstaller.exe…");
+execFileSync(
+    process.execPath,
+    [
+        join(root, "scripts", "append-installer-payload.mjs"),
+        launcherStub,
+        libDir,
+        bundleRoot,
+        version,
+        singleExe,
+    ],
+    { stdio: "inherit", cwd: root }
+);
 
-console.log(`\n[Wimcord] Ready: ${outDir}`);
-console.log("  Double-click WimcordInstaller.exe (no .bat required)\n");
+// Optional folder layout for developers who prefer extracted files
+cpSync(singleExe, join(outDir, "WimcordInstaller.exe"));
+
+writeFileSync(
+    join(outDir, "README.txt"),
+    `Wimcord ${version}
+
+Give users: WimcordInstaller-${version}.exe from the release folder (one file, no zip).
+
+This folder is for development. Run WimcordInstaller.exe here OR use the standalone exe.
+
+https://github.com/Daziusm/wimcord
+`.replace(/\n/g, "\r\n")
+);
+
+console.log(`\n[Wimcord] Release installer (single file): ${singleExe}`);
+console.log(`[Wimcord] Dev folder: ${outDir}\n`);

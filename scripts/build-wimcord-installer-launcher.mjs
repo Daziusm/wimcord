@@ -30,12 +30,20 @@ if (!csc) {
 
 mkdirSync(dirname(outArg), { recursive: true });
 
+const compressionRefs = [
+    join(windir, "Microsoft.NET", "Framework64", "v4.0.30319", "System.IO.Compression.dll"),
+    join(windir, "Microsoft.NET", "Framework64", "v4.0.30319", "System.IO.Compression.FileSystem.dll"),
+];
+
+const refs = compressionRefs.filter(p => existsSync(p)).map(p => `/r:${p}`);
+
 execFileSync(
     csc,
     [
         "/nologo",
         "/target:winexe",
         "/optimize+",
+        ...refs,
         `/out:${outArg}`,
         csSource,
     ],

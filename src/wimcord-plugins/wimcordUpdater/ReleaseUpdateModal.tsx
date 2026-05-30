@@ -140,7 +140,7 @@ function ReleaseUpdateModal({
                 </Paragraph>
             ) : (
                 <Paragraph style={{ fontSize: 12, opacity: 0.85, marginTop: 10 }}>
-                    Download the latest release from GitHub, extract it, and run WimcordInstaller.exe, then restart Discord.
+                    Download WimcordInstaller from the latest GitHub release, run it, then restart Discord.
                 </Paragraph>
             )}
 

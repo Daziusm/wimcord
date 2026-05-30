@@ -20,7 +20,7 @@ pnpm run build
 pnpm run wimcord:installer
 ```
 
-**Offline folder:** `pnpm run wimcord:installer:package` → zip `release/wimcord-installer-<version>/` and run **`WimcordInstaller.exe`**.
+**Release installer:** `pnpm run wimcord:installer:package` → `release/WimcordInstaller-<version>.exe` (single file for users).
 
 **CLI:** `pnpm run inject` / `pnpm run repair` / `pnpm run uninject`
 
@@ -67,7 +67,7 @@ pnpm run build
 pnpm run inject
 ```
 
-Output: `release/wimcord-installer-<version>/` — double-click `WimcordInstaller.exe`
+Output: `release/WimcordInstaller-<version>.exe` — users download and run that one file
 
 ---
 
